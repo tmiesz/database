@@ -3,10 +3,26 @@
     PrintPrompt();
     var input = ReadInput();
 
-    if (input is ".exit")
-        return 0;
+    if (input.StartsWith('.'))
+        HandleMetaInput(input);
 
     else Console.WriteLine($"Unrecognized command '{input}'.");
+}
+
+static void HandleMetaInput(string input)
+{
+    var command = input[1..];
+
+    switch (command)
+    {
+        case "exit":
+            Environment.Exit(0);
+            break;
+        default:
+            Console.WriteLine($"Unrecognized command '{input}'.");
+            return;
+    }
+
 }
 
 static string ReadInput()
