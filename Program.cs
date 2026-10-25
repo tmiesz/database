@@ -1,12 +1,31 @@
 ﻿while (true)
 {
     PrintPrompt();
-    var input = ReadInput();
+    HandleInput(ReadInput());
+}
 
+static void HandleInput(string input)
+{
     if (input.StartsWith('.'))
+    {
         HandleMetaInput(input);
+        return;
+    }
 
-    else Console.WriteLine($"Unrecognized command '{input}'.");
+    var command = PrepareInput(input);
+
+    if (command is null)
+        Console.WriteLine($"Unrecognized keyword at start of '{input}'.");
+}
+
+static Kind? PrepareInput(string input)
+{
+    if (input.Equals("select", StringComparison.OrdinalIgnoreCase))
+        return Kind.SELECT;
+    if (input.Equals("insert", StringComparison.OrdinalIgnoreCase))
+        return Kind.INSERT;
+
+    return null;
 }
 
 static void HandleMetaInput(string input)
@@ -44,4 +63,10 @@ static string ReadInput()
 static void PrintPrompt()
 {
     Console.Write("db > ");
+}
+
+enum Kind
+{
+    SELECT,
+    INSERT
 }
