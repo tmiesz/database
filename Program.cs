@@ -12,17 +12,31 @@ static void HandleInput(string input)
         return;
     }
 
-    var command = PrepareInput(input);
-
-    if (command is null)
+    if (PrepareInput(input) is not Kind kind)
+    {
         Console.WriteLine($"Unrecognized keyword at start of '{input}'.");
+        return;
+    }
+
+    Execute(kind);
+    Console.WriteLine("Executed.");
 }
+
+static void Execute(Kind kind) =>
+    Console.WriteLine(kind switch
+    {
+        Kind.INSERT => "This is where we would do an insert.",
+        Kind.SELECT => "This is where we would do a select.",
+        _ => "Unrecognized command."
+    });
 
 static Kind? PrepareInput(string input)
 {
-    if (input.Equals("select", StringComparison.OrdinalIgnoreCase))
+    var keyword = input.Split(' ', 2)[0];
+
+    if (keyword.Equals("select", StringComparison.OrdinalIgnoreCase))
         return Kind.SELECT;
-    if (input.Equals("insert", StringComparison.OrdinalIgnoreCase))
+    if (keyword.Equals("insert", StringComparison.OrdinalIgnoreCase))
         return Kind.INSERT;
 
     return null;
