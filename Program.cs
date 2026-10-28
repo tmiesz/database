@@ -4,7 +4,7 @@
     HandleInput(ReadInput());
 }
 
-static void HandleInput(string input)
+void HandleInput(string input)
 {
     if (input.StartsWith('.'))
     {
@@ -12,34 +12,71 @@ static void HandleInput(string input)
         return;
     }
 
-    if (PrepareInput(input) is not Kind kind)
+    var result = PrepareInput(input, out var statement);
+
+    switch (result)
     {
-        Console.WriteLine($"Unrecognized keyword at start of '{input}'.");
-        return;
+        case Outcome.Success:
+            break;
+        case Outcome.SyntaxError:
+            Console.WriteLine("Syntax error. Could not parse statement.");
+            return;
+        case Outcome.UnrecognizedKeyword:
+            Console.WriteLine($"Unrecognized keyword at start of '{input}'.");
+            return;
     }
 
-    Execute(kind);
+    Execute(statement);
     Console.WriteLine("Executed.");
 }
 
-static void Execute(Kind kind) =>
-    Console.WriteLine(kind switch
-    {
-        Kind.INSERT => "This is where we would do an insert.",
-        Kind.SELECT => "This is where we would do a select.",
-        _ => "Unrecognized command."
-    });
-
-static Kind? PrepareInput(string input)
+static void PrintRow(Row record)
 {
-    var keyword = input.Split(' ', 2)[0];
+    Console.WriteLine($"({record.Id}, {record.UserName}, {record.Email})");
+}
 
-    if (keyword.Equals("select", StringComparison.OrdinalIgnoreCase))
-        return Kind.SELECT;
-    if (keyword.Equals("insert", StringComparison.OrdinalIgnoreCase))
-        return Kind.INSERT;
+static void Execute(Statement statement)
+{
+    switch (statement.Kind)
+    {
+        case Kind.INSERT:
+            PrintRow(statement.Row!);
+            break;
 
-    return null;
+        case Kind.SELECT:
+            Console.WriteLine("This is where we would do a select.");
+            break;
+
+        default:
+            Console.WriteLine("Unrecognized command.");
+            break;
+    }
+}
+
+static Outcome PrepareInput(string input, out Statement statement)
+{
+    var parts = input.Split(' ', 4);
+    statement = null!;
+
+    if (parts[0].Equals("select", StringComparison.OrdinalIgnoreCase))
+    {
+        statement = new(Kind.SELECT, null);
+        return Outcome.Success;
+    }
+
+    if (parts[0].Equals("insert", StringComparison.OrdinalIgnoreCase))
+    {
+        if (parts.Length < 4)
+            return Outcome.SyntaxError;
+
+        if (!uint.TryParse(parts[1], out var id))
+            return Outcome.SyntaxError;
+
+        statement = new(Kind.INSERT, new Row(id, parts[2], parts[3]));
+        return Outcome.Success;
+    }
+
+    return Outcome.UnrecognizedKeyword;
 }
 
 static void HandleMetaInput(string input)
@@ -84,3 +121,13 @@ enum Kind
     SELECT,
     INSERT
 }
+
+enum Outcome
+{
+    Success,
+    SyntaxError,
+    UnrecognizedKeyword
+}
+
+record Statement(Kind Kind, Row? Row);
+record Row(uint Id, string UserName, string Email);
