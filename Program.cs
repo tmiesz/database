@@ -1,12 +1,23 @@
 ﻿using System.Text;
 
+Row.TryCreate(1, "cstack", "foo@bar.com", out var r1);
+Row.TryCreate(2, "bob", "b@x.io", out var r2);
+
+var buffer = new byte[291 * 2];
+r1.Serialize(buffer, 0);
+r2.Serialize(buffer, 291);
+
+Row.Deserialize(buffer, 0).PrintRow();
+Row.Deserialize(buffer, 291).PrintRow();
+Console.WriteLine(Row.Deserialize(buffer, 0).UserName == "cstack");
+
 while (true)
 {
     PrintPrompt();
     HandleInput(ReadInput());
 }
 
-void HandleInput(string input)
+static void HandleInput(string input)
 {
     if (input.StartsWith('.'))
     {
@@ -166,6 +177,37 @@ class Row
         Id = id;
         UserName = userName;
         Email = email;
+    }
+
+    public void Serialize(byte[] buffer, int start)
+    {
+        var idBytes = BitConverter.GetBytes(Id);
+        Array.Copy(idBytes, 0, buffer, start, idBytes.Length);
+
+        var userNameBytes = Encoding.UTF8.GetBytes(UserName);
+        Array.Copy(userNameBytes, 0, buffer, start + USERNAME_OFFSET, userNameBytes.Length);
+
+        var emailBytes = Encoding.UTF8.GetBytes(Email);
+        Array.Copy(emailBytes, 0, buffer, start + EMAIL_OFFSET, emailBytes.Length);
+    }
+
+    public static Row Deserialize(byte[] buffer, int start)
+    {
+        var id = BitConverter.ToUInt32(buffer.AsSpan(start + ID_OFFSET, ID_SIZE));
+
+        var nameSlot = buffer.AsSpan(start + USERNAME_OFFSET, USERNAME_SIZE);
+        var nameZero = nameSlot.IndexOf((byte)0);
+        var nameLength = nameZero == -1 ? USERNAME_SIZE : nameZero;
+        var userName = Encoding.UTF8.GetString(nameSlot[..nameLength]);
+
+        var emailSlot = buffer.AsSpan(start + EMAIL_OFFSET, EMAIL_SIZE);
+        var emailZero = emailSlot.IndexOf((byte)0);
+        var emailLength = emailZero == -1 ? EMAIL_SIZE : emailZero;
+        var email = Encoding.UTF8.GetString(emailSlot[..emailLength]);
+
+        TryCreate(id, userName, email, out var row);
+
+        return row;
     }
 
     public static bool TryCreate(uint id, string userName, string email, out Row row)
