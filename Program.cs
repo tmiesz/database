@@ -1,12 +1,15 @@
 ﻿using System.Text;
 
 var table = new Table();
-var (page, start) = table.GetSlot(15);
-Console.WriteLine($"{page.Length}, {start}");
-Console.WriteLine(table.GetSlot(0).start);
-Console.WriteLine(table.GetSlot(13).start);
-Console.WriteLine(ReferenceEquals(table.GetSlot(14).page, table.GetSlot(15).page));
-Console.WriteLine(ReferenceEquals(table.GetSlot(0).page, table.GetSlot(14).page));
+
+for (uint i = 1; i < 1410; i++)
+{
+    Row.TryCreate(i, "test", "test@test.com", out Row r);
+    var result = table.Insert(r);
+
+    if (result != InsertOutcome.Success)
+        Console.WriteLine($"{i}:!!!");
+}
 
 while (true)
 {
@@ -148,6 +151,12 @@ enum Outcome
     SizeError
 }
 
+enum InsertOutcome
+{
+    Success,
+    Error
+}
+
 record Statement(Kind Kind, Row? Row);
 
 class Row
@@ -245,5 +254,18 @@ class Table()
         }
 
         return (Pages[pageNumber], start);
+    }
+
+    public InsertOutcome Insert(Row row)
+    {
+        if (RowCount == TABLE_MAX_ROWS)
+            return InsertOutcome.Error;
+
+        var (page, start) = GetSlot(RowCount);
+
+        row.Serialize(page, start);
+        RowCount++;
+
+        return InsertOutcome.Success;
     }
 }
