@@ -2,22 +2,13 @@
 
 var table = new Table();
 
-for (uint i = 1; i < 1410; i++)
-{
-    Row.TryCreate(i, "test", "test@test.com", out Row r);
-    var result = table.Insert(r);
-
-    if (result != InsertOutcome.Success)
-        Console.WriteLine($"{i}:!!!");
-}
-
 while (true)
 {
     PrintPrompt();
     HandleInput(ReadInput());
 }
 
-static void HandleInput(string input)
+void HandleInput(string input)
 {
     if (input.StartsWith('.'))
     {
@@ -43,16 +34,20 @@ static void HandleInput(string input)
 
     }
 
-    Execute(statement);
-    Console.WriteLine("Executed.");
+    Execute(statement, table);
 }
 
-static void Execute(Statement statement)
+static void Execute(Statement statement, Table table)
 {
     switch (statement.Kind)
     {
         case Kind.INSERT:
-            statement.Row!.PrintRow();
+            var result = table.Insert(statement.Row!);
+
+            if (result == InsertOutcome.Error)
+                Console.WriteLine("Error: Table full.");
+            else Console.WriteLine("Executed.");
+
             break;
 
         case Kind.SELECT:
