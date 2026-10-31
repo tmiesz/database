@@ -1,15 +1,12 @@
 ﻿using System.Text;
 
-Row.TryCreate(1, "cstack", "foo@bar.com", out var r1);
-Row.TryCreate(2, "bob", "b@x.io", out var r2);
-
-var buffer = new byte[291 * 2];
-r1.Serialize(buffer, 0);
-r2.Serialize(buffer, 291);
-
-Row.Deserialize(buffer, 0).PrintRow();
-Row.Deserialize(buffer, 291).PrintRow();
-Console.WriteLine(Row.Deserialize(buffer, 0).UserName == "cstack");
+var table = new Table();
+var (page, start) = table.GetSlot(15);
+Console.WriteLine($"{page.Length}, {start}");
+Console.WriteLine(table.GetSlot(0).start);
+Console.WriteLine(table.GetSlot(13).start);
+Console.WriteLine(ReferenceEquals(table.GetSlot(14).page, table.GetSlot(15).page));
+Console.WriteLine(ReferenceEquals(table.GetSlot(0).page, table.GetSlot(14).page));
 
 while (true)
 {
@@ -155,7 +152,6 @@ record Statement(Kind Kind, Row? Row);
 
 class Row
 {
-
     const int ID_SIZE = 4;
     const int USERNAME_SIZE = 32;
     const int EMAIL_SIZE = 255;
@@ -163,10 +159,7 @@ class Row
     const int ID_OFFSET = 0;
     const int USERNAME_OFFSET = ID_OFFSET + ID_SIZE;
     const int EMAIL_OFFSET = USERNAME_OFFSET + USERNAME_SIZE;
-
-    const int ROW_SIZE = ID_SIZE + USERNAME_SIZE + EMAIL_SIZE;
-    const int PAGE_SIZE = 4096;
-    const int ROWS_PER_PAGE = PAGE_SIZE / ROW_SIZE;
+    public const int ROW_SIZE = ID_SIZE + USERNAME_SIZE + EMAIL_SIZE;
 
     public uint Id { get; set; }
     public string UserName { get; set; }
@@ -227,5 +220,30 @@ class Row
     public void PrintRow()
     {
         Console.WriteLine($"({Id}, {UserName}, {Email})");
+    }
+}
+
+class Table()
+{
+    public byte[][] Pages { get; } = new byte[TABLE_MAX_PAGES][];
+    public int RowCount { get; private set; } = 0;
+
+    const int PAGE_SIZE = 4096;
+    const int ROWS_PER_PAGE = PAGE_SIZE / Row.ROW_SIZE;
+    const int TABLE_MAX_PAGES = 100;
+    const int TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
+
+    public (byte[] page, int start) GetSlot(int rowNumber)
+    {
+        var pageNumber = rowNumber / ROWS_PER_PAGE;
+        var boxNumber = rowNumber % ROWS_PER_PAGE;
+        var start = boxNumber * Row.ROW_SIZE;
+
+        if (Pages[pageNumber] is null)
+        {
+            Pages[pageNumber] = new byte[PAGE_SIZE];
+        }
+
+        return (Pages[pageNumber], start);
     }
 }
