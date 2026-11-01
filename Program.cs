@@ -51,7 +51,8 @@ static void Execute(Statement statement, Table table)
             break;
 
         case Kind.SELECT:
-            Console.WriteLine("This is where we would do a select.");
+            table.Select();
+            Console.WriteLine("Executed.");
             break;
 
         default:
@@ -262,5 +263,15 @@ class Table()
         RowCount++;
 
         return InsertOutcome.Success;
+    }
+
+    public void Select()
+    {
+        for (int i = 0; i < RowCount; i++)
+        {
+            var (page, start) = GetSlot(i);
+            var row = Row.Deserialize(page, start);
+            row.PrintRow();
+        }
     }
 }
