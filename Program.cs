@@ -203,7 +203,7 @@ class Row
         var emailLength = emailZero == -1 ? EMAIL_SIZE : emailZero;
         var email = Encoding.UTF8.GetString(emailSlot[..emailLength]);
 
-        TryCreate(id, userName, email, out var row);
+        var row = new Row(id, userName, email);
 
         return row;
     }
