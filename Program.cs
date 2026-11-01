@@ -29,7 +29,10 @@ void HandleInput(string input)
             Console.WriteLine($"Unrecognized keyword at start of '{input}'.");
             return;
         case Outcome.SizeError:
-            Console.WriteLine("Size is too big");
+            Console.WriteLine("String is too long.");
+            return;
+        case Outcome.NegativeId:
+            Console.WriteLine("ID must be positive.");
             return;
 
     }
@@ -81,10 +84,12 @@ static Outcome PrepareInput(string input, out Statement statement)
         if (parts.Length != 4)
             return Outcome.SyntaxError;
 
-        if (!uint.TryParse(parts[1], out var id))
+        if (!long.TryParse(parts[1], out var id))
             return Outcome.SyntaxError;
+        if (id < 0) return Outcome.NegativeId;
+        if (id > uint.MaxValue) return Outcome.SyntaxError;
 
-        if (!Row.TryCreate(id, parts[2], parts[3], out Row row))
+        if (!Row.TryCreate((uint)id, parts[2], parts[3], out Row row))
         {
             return Outcome.SizeError;
         }
@@ -144,7 +149,8 @@ enum Outcome
     Success,
     SyntaxError,
     UnrecognizedKeyword,
-    SizeError
+    SizeError,
+    NegativeId
 }
 
 enum InsertOutcome
