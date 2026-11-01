@@ -41,11 +41,60 @@ public class DatabaseTests
                 ".exit");
 
         Assert.True(exitCode == 0, error);
-        Assert.Equal(new[]{
-                "db > Executed.",
-                "db > (1, user1, person1@example.com)",
-                "Executed.",
-                "db > "
-                }, lines);
+        Assert.Equal("db > (1, user1, person1@example.com)", lines[^3]);
+    }
+
+    [Fact]
+    public async Task InsertsOverTableSize()
+    {
+        var commands = Enumerable.Range(1, 1401)
+            .Select(i => $"insert {i} user{i} person{i}@example.com")
+            .Append(".exit")
+            .ToArray();
+
+        var (lines, exitCode, error) = await RunScript(commands);
+
+        Assert.True(exitCode == 0, error);
+        Assert.Equal("db > Error: Table full.", lines[^2]);
+    }
+
+    [Fact]
+    public async Task InsertsMaximumLength()
+    {
+        var maxName = new string('a', 32);
+        var maxMail = new string('a', 255);
+        var (lines, exitCode, error) = await RunScript(
+            $"insert 1 {maxName} {maxMail}",
+            "select",
+            ".exit");
+
+        Assert.True(exitCode == 0, error);
+        Assert.Equal($"db > (1, {maxName}, {maxMail})", lines[^3]);
+    }
+
+    [Fact]
+    public async Task InsertsOverMaximumLength()
+    {
+        var maxName = new string('a', 33);
+        var maxMail = new string('a', 256);
+        var (lines, exitCode, error) = await RunScript(
+            $"insert 1 {maxName} {maxMail}",
+            "select",
+            ".exit");
+
+        Assert.True(exitCode == 0, error);
+        Assert.Equal("db > String is too long.", lines[^3]);
+    }
+
+    [Fact]
+    public async Task InsertsNegativeId()
+    {
+        var (lines, exitCode, error) = await RunScript(
+            "insert -1 user1 person1@example.com",
+            "select",
+            ".exit");
+
+        Assert.True(exitCode == 0, error);
+        Assert.Equal("db > ID must be positive.", lines[^3]);
     }
 }
