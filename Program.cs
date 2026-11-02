@@ -1,13 +1,13 @@
 ﻿using System.Text;
 
-
 if (args.Length < 1)
 {
     Console.WriteLine("Must supply a database filename.");
     Environment.Exit(1);
 }
 
-var table = new Table();
+var pager = new Pager(args[0]);
+var table = new Table(pager);
 
 while (true)
 {
@@ -166,6 +166,12 @@ enum InsertOutcome
     Error
 }
 
+static class Constants
+{
+    public const int MAX_PAGES = 100;
+    public const int PAGE_SIZE = 4096;
+}
+
 record Statement(Kind Kind, Row? Row);
 
 class Row
@@ -241,15 +247,12 @@ class Row
     }
 }
 
-class Table()
+class Table(Pager pager)
 {
-    public byte[][] Pages { get; } = new byte[TABLE_MAX_PAGES][];
     public int RowCount { get; private set; } = 0;
 
-    const int PAGE_SIZE = 4096;
-    const int ROWS_PER_PAGE = PAGE_SIZE / Row.ROW_SIZE;
-    const int TABLE_MAX_PAGES = 100;
-    const int TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
+    const int ROWS_PER_PAGE = Constants.PAGE_SIZE / Row.ROW_SIZE;
+    const int TABLE_MAX_ROWS = ROWS_PER_PAGE * Constants.MAX_PAGES;
 
     public (byte[] page, int start) GetSlot(int rowNumber)
     {
@@ -257,12 +260,9 @@ class Table()
         var boxNumber = rowNumber % ROWS_PER_PAGE;
         var start = boxNumber * Row.ROW_SIZE;
 
-        if (Pages[pageNumber] is null)
-        {
-            Pages[pageNumber] = new byte[PAGE_SIZE];
-        }
+        var page = pager.RetrievePage(pageNumber);
 
-        return (Pages[pageNumber], start);
+        return (page, start);
     }
 
     public InsertOutcome Insert(Row row)
@@ -286,5 +286,34 @@ class Table()
             var row = Row.Deserialize(page, start);
             row.PrintRow();
         }
+    }
+}
+
+class Pager
+{
+    public string FileName { get; }
+    public FileStream FileStream { get; }
+    private byte[][] Pages { get; } = new byte[Constants.MAX_PAGES][];
+    public long Length { get; }
+
+    public Pager(string fileName)
+    {
+        FileName = fileName;
+        FileStream = new FileStream(
+                FileName,
+                FileMode.OpenOrCreate,
+                FileAccess.ReadWrite
+                );
+        Length = FileStream.Length;
+    }
+
+    public byte[] RetrievePage(int pageNumber)
+    {
+        if (Pages[pageNumber] is null)
+        {
+            Pages[pageNumber] = new byte[Constants.PAGE_SIZE];
+        }
+
+        return Pages[pageNumber];
     }
 }
