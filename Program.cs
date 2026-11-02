@@ -1,5 +1,12 @@
 ﻿using System.Text;
 
+
+if (args.Length < 1)
+{
+    Console.WriteLine("Must supply a database filename.");
+    Environment.Exit(1);
+}
+
 var table = new Table();
 
 while (true)
