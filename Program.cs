@@ -9,15 +9,6 @@ if (args.Length < 1)
 var pager = new Pager(args[0]);
 var table = new Table(pager);
 
-Row.Deserialize(pager.RetrievePage(0), 0).PrintRow();
-Row.Deserialize(pager.RetrievePage(5), 0).PrintRow();
-
-Row.Deserialize(pager.RetrievePage(1), 0).PrintRow();
-Row.Deserialize(pager.RetrievePage(0), 0).PrintRow();
-pager.RetrievePage(99);
-pager.RetrievePage(100);
-Console.WriteLine(ReferenceEquals(pager.RetrievePage(0), pager.RetrievePage(0)));
-
 while (true)
 {
     PrintPrompt();
@@ -258,7 +249,7 @@ class Row
 
 class Table(Pager pager)
 {
-    public int RowCount { get; private set; } = 0;
+    public int RowCount { get; private set; } = (int)pager.Length / Row.ROW_SIZE;
 
     const int ROWS_PER_PAGE = Constants.PAGE_SIZE / Row.ROW_SIZE;
     const int TABLE_MAX_ROWS = ROWS_PER_PAGE * Constants.MAX_PAGES;
@@ -320,7 +311,7 @@ class Pager
     {
         if (pageNumber >= Constants.MAX_PAGES)
         {
-            Console.WriteLine($"Tried to fetch page number out of bonds. {pageNumber} > {Constants.MAX_PAGES-1}");
+            Console.WriteLine($"Tried to fetch page number out of bonds. {pageNumber} > {Constants.MAX_PAGES - 1}");
             Environment.Exit(1);
         }
 
