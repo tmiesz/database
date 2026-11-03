@@ -333,4 +333,18 @@ class Pager
 
         return Pages[pageNumber];
     }
+
+    public void Flush(int pageNumber, int size)
+    {
+        if (Pages[pageNumber] is null)
+        {
+            Console.WriteLine("blabla");
+            Environment.Exit(1);
+        }
+        var offset = pageNumber * Constants.PAGE_SIZE;
+        FileStream.Seek(offset, SeekOrigin.Begin);
+
+        FileStream.Write(Pages[pageNumber], 0, size);
+        FileStream.Flush();
+    }
 }
