@@ -9,6 +9,15 @@ if (args.Length < 1)
 var pager = new Pager(args[0]);
 var table = new Table(pager);
 
+Row.Deserialize(pager.RetrievePage(0), 0).PrintRow();
+Row.Deserialize(pager.RetrievePage(5), 0).PrintRow();
+
+Row.Deserialize(pager.RetrievePage(1), 0).PrintRow();
+Row.Deserialize(pager.RetrievePage(0), 0).PrintRow();
+pager.RetrievePage(99);
+pager.RetrievePage(100);
+Console.WriteLine(ReferenceEquals(pager.RetrievePage(0), pager.RetrievePage(0)));
+
 while (true)
 {
     PrintPrompt();
@@ -309,9 +318,26 @@ class Pager
 
     public byte[] RetrievePage(int pageNumber)
     {
+        if (pageNumber >= Constants.MAX_PAGES)
+        {
+            Console.WriteLine($"Tried to fetch page number out of bonds. {pageNumber} > {Constants.MAX_PAGES-1}");
+            Environment.Exit(1);
+        }
+
+        byte[] buffer;
+
         if (Pages[pageNumber] is null)
         {
-            Pages[pageNumber] = new byte[Constants.PAGE_SIZE];
+            buffer = new byte[Constants.PAGE_SIZE];
+
+            var offset = pageNumber * Constants.PAGE_SIZE;
+            FileStream.Seek(offset, SeekOrigin.Begin);
+
+            _ = FileStream.Read(buffer, 0, Constants.PAGE_SIZE);
+
+            Pages[pageNumber] = buffer;
+
+            return buffer;
         }
 
         return Pages[pageNumber];
