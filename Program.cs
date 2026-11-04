@@ -19,7 +19,7 @@ void HandleInput(string input)
 {
     if (input.StartsWith('.'))
     {
-        HandleMetaInput(input);
+        HandleMetaInput(input, table);
         return;
     }
 
@@ -108,13 +108,14 @@ static Outcome PrepareInput(string input, out Statement statement)
     return Outcome.UnrecognizedKeyword;
 }
 
-static void HandleMetaInput(string input)
+static void HandleMetaInput(string input, Table table)
 {
     var command = input[1..];
 
     switch (command)
     {
         case "exit":
+            table.Close();
             Environment.Exit(0);
             break;
         default:
@@ -249,7 +250,8 @@ class Row
 
 class Table(Pager pager)
 {
-    public int RowCount { get; private set; } = (int)pager.Length / Row.ROW_SIZE;
+    public Pager Pager { get; } = pager;
+    public int RowCount { get; private set; } = (int)(pager.Length / Row.ROW_SIZE);
 
     const int ROWS_PER_PAGE = Constants.PAGE_SIZE / Row.ROW_SIZE;
     const int TABLE_MAX_ROWS = ROWS_PER_PAGE * Constants.MAX_PAGES;
@@ -260,7 +262,7 @@ class Table(Pager pager)
         var boxNumber = rowNumber % ROWS_PER_PAGE;
         var start = boxNumber * Row.ROW_SIZE;
 
-        var page = pager.RetrievePage(pageNumber);
+        var page = Pager.RetrievePage(pageNumber);
 
         return (page, start);
     }
@@ -286,6 +288,22 @@ class Table(Pager pager)
             var row = Row.Deserialize(page, start);
             row.PrintRow();
         }
+    }
+
+    public void Close()
+    {
+        var fullPages = RowCount / ROWS_PER_PAGE;
+        for (int i = 0; i < fullPages; i++)
+        {
+            if (!Pager.IsPageLoaded(i))
+                continue;
+            Pager.Flush(i, Constants.PAGE_SIZE);
+        }
+        var leftoverRows = RowCount % ROWS_PER_PAGE;
+        if (leftoverRows > 0 && Pager.IsPageLoaded(fullPages))
+            Pager.Flush(fullPages, leftoverRows * Row.ROW_SIZE);
+
+        Pager.FileStream.Dispose();
     }
 }
 
@@ -334,11 +352,19 @@ class Pager
         return Pages[pageNumber];
     }
 
+    public bool IsPageLoaded(int pageNumber)
+    {
+        if (Pages[pageNumber] != null)
+            return true;
+
+        else return false;
+    }
+
     public void Flush(int pageNumber, int size)
     {
         if (Pages[pageNumber] is null)
         {
-            Console.WriteLine("blabla");
+            Console.WriteLine($"Page {pageNumber} is not loaded");
             Environment.Exit(1);
         }
         var offset = pageNumber * Constants.PAGE_SIZE;
