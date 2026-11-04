@@ -5,7 +5,7 @@ namespace database.tests;
 
 public class DatabaseTests
 {
-    static string ProjetcPath([CallerFilePath] string thisFile = "") =>
+    static string ProjectPath([CallerFilePath] string thisFile = "") =>
         Path.GetFullPath(Path.Combine(Path.GetDirectoryName(thisFile)!, "..", "database.csproj"));
 
     static async Task<(string[] Lines, int ExitCode, string Error)> RunScript(params string[] commands)
@@ -13,7 +13,7 @@ public class DatabaseTests
         var info = new ProcessStartInfo
         {
             FileName = "dotnet",
-            ArgumentList = { "run", "--project", ProjetcPath() },
+            ArgumentList = { "run", "--project", ProjectPath() },
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true
