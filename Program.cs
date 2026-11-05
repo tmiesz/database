@@ -171,6 +171,8 @@ static class Constants
 {
     public const int MAX_PAGES = 100;
     public const int PAGE_SIZE = 4096;
+    public const int ROWS_PER_PAGE = PAGE_SIZE / Row.ROW_SIZE;
+    public const int TABLE_MAX_ROWS = ROWS_PER_PAGE * MAX_PAGES;
 }
 
 record Statement(Kind Kind, Row? Row);
@@ -253,26 +255,14 @@ class Table(Pager pager)
     public Pager Pager { get; } = pager;
     public int RowCount { get; private set; } = (int)(pager.Length / Row.ROW_SIZE);
 
-    const int ROWS_PER_PAGE = Constants.PAGE_SIZE / Row.ROW_SIZE;
-    const int TABLE_MAX_ROWS = ROWS_PER_PAGE * Constants.MAX_PAGES;
-
-    public (byte[] page, int start) GetSlot(int rowNumber)
-    {
-        var pageNumber = rowNumber / ROWS_PER_PAGE;
-        var boxNumber = rowNumber % ROWS_PER_PAGE;
-        var start = boxNumber * Row.ROW_SIZE;
-
-        var page = Pager.RetrievePage(pageNumber);
-
-        return (page, start);
-    }
-
     public InsertOutcome Insert(Row row)
     {
-        if (RowCount == TABLE_MAX_ROWS)
+        if (RowCount == Constants.TABLE_MAX_ROWS)
             return InsertOutcome.Error;
 
-        var (page, start) = GetSlot(RowCount);
+        var cursor = Cursor.CreateAtEnd(this);
+
+        var (page, start) = cursor.GetValue();
 
         row.Serialize(page, start);
         RowCount++;
@@ -282,24 +272,26 @@ class Table(Pager pager)
 
     public void Select()
     {
-        for (int i = 0; i < RowCount; i++)
+        var cursor = Cursor.CreateAtStart(this);
+        while (!cursor.EndOfTable)
         {
-            var (page, start) = GetSlot(i);
+            var (page, start) = cursor.GetValue();
             var row = Row.Deserialize(page, start);
             row.PrintRow();
+            cursor.Advance();
         }
     }
 
     public void Close()
     {
-        var fullPages = RowCount / ROWS_PER_PAGE;
+        var fullPages = RowCount / Constants.ROWS_PER_PAGE;
         for (int i = 0; i < fullPages; i++)
         {
             if (!Pager.IsPageLoaded(i))
                 continue;
             Pager.Flush(i, Constants.PAGE_SIZE);
         }
-        var leftoverRows = RowCount % ROWS_PER_PAGE;
+        var leftoverRows = RowCount % Constants.ROWS_PER_PAGE;
         if (leftoverRows > 0 && Pager.IsPageLoaded(fullPages))
             Pager.Flush(fullPages, leftoverRows * Row.ROW_SIZE);
 
@@ -389,5 +381,20 @@ class Cursor(Table table, int rowNumber)
     public static Cursor CreateAtEnd(Table table)
     {
         return new Cursor(table, table.RowCount);
+    }
+
+    public (byte[] page, int start) GetValue()
+    {
+        var pageNumber = RowNumber / Constants.ROWS_PER_PAGE;
+        var boxNumber = RowNumber % Constants.ROWS_PER_PAGE;
+        var start = boxNumber * Row.ROW_SIZE;
+        var page = Table.Pager.RetrievePage(pageNumber);
+
+        return (page, start);
+    }
+
+    public void Advance()
+    {
+        RowNumber++;
     }
 }
