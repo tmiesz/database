@@ -374,3 +374,20 @@ class Pager
         FileStream.Flush();
     }
 }
+
+class Cursor(Table table, int rowNumber)
+{
+    public Table Table { get; } = table;
+    public int RowNumber { get; private set; } = rowNumber;
+    public bool EndOfTable => RowNumber >= Table.RowCount;
+
+    public static Cursor CreateAtStart(Table table)
+    {
+        return new Cursor(table, 0);
+    }
+
+    public static Cursor CreateAtEnd(Table table)
+    {
+        return new Cursor(table, table.RowCount);
+    }
+}
