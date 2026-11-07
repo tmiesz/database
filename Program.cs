@@ -9,6 +9,11 @@ if (args.Length < 1)
 var pager = new Pager(args[0]);
 var table = new Table(pager);
 
+var page = new byte[Constants.PAGE_SIZE];
+LeafNode leaf = new(page) { CellCount = 300 };
+Console.WriteLine(string.Join(",", page[0..10]));
+Console.WriteLine(leaf.CellCount);
+
 while (true)
 {
     PrintPrompt();
@@ -149,6 +154,21 @@ static void PrintPrompt()
     Console.Write("db > ");
 }
 
+class LeafNode(byte[] page)
+{
+    private readonly byte[] page = page;
+
+    public uint CellCount
+    {
+        get => BitConverter.ToUInt32(page, Constants.CELL_COUNT_OFFSET);
+        set
+        {
+            var bytes = BitConverter.GetBytes(value);
+            Array.Copy(bytes, 0, page, Constants.CELL_COUNT_OFFSET, bytes.Length);
+        }
+    }
+}
+
 enum Kind
 {
     SELECT,
@@ -177,6 +197,7 @@ static class Constants
     private const int ParentPointerSize = 4;
     private const int CellCountSize = 4;
     private const int KeySize = 4;
+    public const int CELL_COUNT_OFFSET = NodeTypeSize + IsRootFlagSize + ParentPointerSize + 1;
     public const int COMMON_NODE_HEADER_SIZE = NodeTypeSize + IsRootFlagSize + ParentPointerSize;
     public const int LEAF_NODE_HEADER_SIZE = COMMON_NODE_HEADER_SIZE + CellCountSize;
     public const int LEAF_NODE_CELL_SIZE = KeySize + Row.ROW_SIZE;
