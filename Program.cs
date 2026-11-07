@@ -118,6 +118,9 @@ static void HandleMetaInput(string input, Table table)
             table.Close();
             Environment.Exit(0);
             break;
+        case "constants":
+            Constants.Print();
+            break;
         default:
             Console.WriteLine($"Unrecognized command '{input}'.");
             return;
@@ -169,10 +172,32 @@ enum InsertOutcome
 
 static class Constants
 {
+    private const int NodeTypeSize = 1;
+    private const int IsRootFlagSize = 1;
+    private const int ParentPointerSize = 4;
+    private const int CellCountSize = 4;
+    private const int KeySize = 4;
+    public const int COMMON_NODE_HEADER_SIZE = NodeTypeSize + IsRootFlagSize + ParentPointerSize;
+    public const int LEAF_NODE_HEADER_SIZE = COMMON_NODE_HEADER_SIZE + CellCountSize;
+    public const int LEAF_NODE_CELL_SIZE = KeySize + Row.ROW_SIZE;
+    public const int LEAF_NODE_SPACE_FOR_CELLS = PAGE_SIZE - LEAF_NODE_HEADER_SIZE;
+    public const int LEAF_NODE_MAX_CELLS = LEAF_NODE_SPACE_FOR_CELLS / LEAF_NODE_CELL_SIZE;
+
     public const int MAX_PAGES = 100;
     public const int PAGE_SIZE = 4096;
     public const int ROWS_PER_PAGE = PAGE_SIZE / Row.ROW_SIZE;
     public const int TABLE_MAX_ROWS = ROWS_PER_PAGE * MAX_PAGES;
+
+    internal static void Print()
+    {
+        Console.WriteLine("Constants:");
+        Console.WriteLine($"{nameof(Row.ROW_SIZE)}: {Row.ROW_SIZE}");
+        Console.WriteLine($"{nameof(COMMON_NODE_HEADER_SIZE)}: {COMMON_NODE_HEADER_SIZE}");
+        Console.WriteLine($"{nameof(LEAF_NODE_HEADER_SIZE)}: {LEAF_NODE_HEADER_SIZE}");
+        Console.WriteLine($"{nameof(LEAF_NODE_CELL_SIZE)}: {LEAF_NODE_CELL_SIZE}");
+        Console.WriteLine($"{nameof(LEAF_NODE_SPACE_FOR_CELLS)}: {LEAF_NODE_SPACE_FOR_CELLS}");
+        Console.WriteLine($"{nameof(LEAF_NODE_MAX_CELLS)}: {LEAF_NODE_MAX_CELLS}");
+    }
 }
 
 record Statement(Kind Kind, Row? Row);
