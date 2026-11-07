@@ -10,9 +10,21 @@ var pager = new Pager(args[0]);
 var table = new Table(pager);
 
 var page = new byte[Constants.PAGE_SIZE];
-LeafNode leaf = new(page) { CellCount = 300 };
-Console.WriteLine(string.Join(",", page[0..10]));
-Console.WriteLine(leaf.CellCount);
+LeafNode leaf = new(page);
+leaf.SetKeyForCell(0, 7);
+leaf.SetKeyForCell(1, 9);
+Console.WriteLine(leaf.GetKey(0));
+Console.WriteLine(leaf.GetKey(1));
+Console.WriteLine(string.Join(",", page[10..14]));
+Console.WriteLine(string.Join(",", page[305..309]));
+
+Row.TryCreate(5, "amy", "a@a.io", out var row);
+leaf.StoreRow(row, 1);
+leaf.GetRow(1).PrintRow();
+Console.WriteLine(leaf.GetKey(1));
+
+leaf.CellCount = 3;
+Console.WriteLine(leaf.GetKey(0));
 
 while (true)
 {
@@ -157,6 +169,8 @@ static void PrintPrompt()
 class LeafNode(byte[] page)
 {
     private readonly byte[] page = page;
+    private static int CellStart(int cell) => Constants.LEAF_NODE_HEADER_SIZE + (cell * Constants.LEAF_NODE_CELL_SIZE);
+    private static int RowStart(int cell) => CellStart(cell) + Constants.LEAF_NODE_VALUE_OFFSET;
 
     public uint CellCount
     {
@@ -166,6 +180,25 @@ class LeafNode(byte[] page)
             var bytes = BitConverter.GetBytes(value);
             Array.Copy(bytes, 0, page, Constants.CELL_COUNT_OFFSET, bytes.Length);
         }
+    }
+
+    public uint GetKey(int key) =>
+        BitConverter.ToUInt32(page, CellStart(key));
+
+    public void SetKeyForCell(int cell, uint key)
+    {
+        var bytes = BitConverter.GetBytes(key);
+        Array.Copy(bytes, 0, page, CellStart(cell), bytes.Length);
+    }
+
+    public Row GetRow(int cell)
+    {
+        return Row.Deserialize(page, RowStart(cell));
+    }
+
+    public void StoreRow(Row row, int cell)
+    {
+        row.Serialize(page, RowStart(cell));
     }
 }
 
@@ -197,8 +230,9 @@ static class Constants
     private const int ParentPointerSize = 4;
     private const int CellCountSize = 4;
     private const int KeySize = 4;
-    public const int CELL_COUNT_OFFSET = NodeTypeSize + IsRootFlagSize + ParentPointerSize + 1;
     public const int COMMON_NODE_HEADER_SIZE = NodeTypeSize + IsRootFlagSize + ParentPointerSize;
+    public const int CELL_COUNT_OFFSET = COMMON_NODE_HEADER_SIZE;
+    public const int LEAF_NODE_VALUE_OFFSET = KeySize;
     public const int LEAF_NODE_HEADER_SIZE = COMMON_NODE_HEADER_SIZE + CellCountSize;
     public const int LEAF_NODE_CELL_SIZE = KeySize + Row.ROW_SIZE;
     public const int LEAF_NODE_SPACE_FOR_CELLS = PAGE_SIZE - LEAF_NODE_HEADER_SIZE;
