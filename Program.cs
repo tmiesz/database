@@ -399,7 +399,7 @@ class Pager
         Length = FileStream.Length;
         if (Length % Constants.PAGE_SIZE != 0)
         {
-            Console.WriteLine("Db file is not a whole number of pages.");
+            Console.WriteLine("Db file is not a whole number of pages. Corrupt file.");
             Environment.Exit(1);
         }
         PageCount = (int)(Length / Constants.PAGE_SIZE);
