@@ -341,7 +341,7 @@ class Table
         if (leaf.CellCount >= Constants.LEAF_NODE_MAX_CELLS)
             return InsertOutcome.Error;
 
-        var cellNumber = cursor.cellNumber;
+        var cellNumber = cursor.CellNumber;
         leaf.SetKeyForCell((int)cellNumber, row.Id);
         leaf.StoreRow(row, (int)cellNumber);
 
@@ -456,12 +456,12 @@ class Pager
     }
 }
 
-class Cursor(Table table, int pageNumber, uint cellNumber)
+class Cursor(Table table, int pageNumber, uint initialCellNumber)
 {
     public Table Table { get; } = table;
     public LeafNode Leaf { get; } = new(table.Pager.RetrievePage(pageNumber));
-    public uint cellNumber = cellNumber;
-    public bool EndOfTable => cellNumber >= Leaf.CellCount;
+    public uint CellNumber { get; private set; } = initialCellNumber;
+    public bool EndOfTable => CellNumber >= Leaf.CellCount;
 
     public static Cursor CreateAtStart(Table table)
     {
@@ -474,6 +474,6 @@ class Cursor(Table table, int pageNumber, uint cellNumber)
         return new Cursor(table, table.RootPageNumber, leaf.CellCount);
     }
 
-    public Row GetValue() => Leaf.GetRow((int)cellNumber);
-    public void Advance() => cellNumber++;
+    public Row GetValue() => Leaf.GetRow((int)CellNumber);
+    public void Advance() => CellNumber++;
 }
