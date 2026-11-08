@@ -315,13 +315,11 @@ class Row
 class Table
 {
     public Pager Pager { get; }
-    public int RowCount { get; private set; }
     public int RootPageNumber { get; } = 0;
 
     public Table(Pager pager)
     {
         Pager = pager;
-        RowCount = (int)(pager.Length / Row.ROW_SIZE);
         if (pager.PageCount == 0)
         {
             var page = pager.RetrievePage(RootPageNumber);
