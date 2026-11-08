@@ -121,6 +121,17 @@ static void HandleMetaInput(string input, Table table)
         case "constants":
             Constants.Print();
             break;
+        case "btree":
+            var leaf = new LeafNode(table.Pager.RetrievePage(table.RootPageNumber));
+            Console.WriteLine("Tree:");
+            Console.WriteLine($"leaf (size {leaf.CellCount})");
+
+            for (int i = 0; i < leaf.CellCount; i++)
+            {
+                Console.Write($"  - {i} : ");
+                Console.WriteLine($"{leaf.GetKey(i)}");
+            }
+            break;
         default:
             Console.WriteLine($"Unrecognized command '{input}'.");
             return;
