@@ -335,15 +335,17 @@ class Table
 
     public InsertOutcome Insert(Row row)
     {
-        if (RowCount == Constants.TABLE_MAX_ROWS)
+        var cursor = Cursor.CreateAtEnd(this);
+        var leaf = cursor.Leaf;
+
+        if (leaf.CellCount >= Constants.LEAF_NODE_MAX_CELLS)
             return InsertOutcome.Error;
 
-        var cursor = Cursor.CreateAtEnd(this);
+        var cellNumber = cursor.cellNumber;
+        leaf.SetKeyForCell((int)cellNumber, row.Id);
+        leaf.StoreRow(row, (int)cellNumber);
 
-        // var (page, start) = cursor.GetValue();
-        //
-        // row.Serialize(page, start);
-        // RowCount++;
+        leaf.CellCount++;
 
         return InsertOutcome.Success;
     }
@@ -458,7 +460,7 @@ class Cursor(Table table, int pageNumber, uint cellNumber)
 {
     public Table Table { get; } = table;
     public LeafNode Leaf { get; } = new(table.Pager.RetrievePage(pageNumber));
-    private uint cellNumber = cellNumber;
+    public uint cellNumber = cellNumber;
     public bool EndOfTable => cellNumber >= Leaf.CellCount;
 
     public static Cursor CreateAtStart(Table table)
