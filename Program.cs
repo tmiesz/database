@@ -8,9 +8,6 @@ if (args.Length < 1)
 
 var pager = new Pager(args[0]);
 var table = new Table(pager);
-Console.WriteLine(pager.PageCount);
-pager.RetrievePage(0);
-Console.WriteLine(pager.PageCount);
 
 while (true)
 {
@@ -343,10 +340,10 @@ class Table
 
         var cursor = Cursor.CreateAtEnd(this);
 
-        var (page, start) = cursor.GetValue();
-
-        row.Serialize(page, start);
-        RowCount++;
+        // var (page, start) = cursor.GetValue();
+        //
+        // row.Serialize(page, start);
+        // RowCount++;
 
         return InsertOutcome.Success;
     }
@@ -356,8 +353,7 @@ class Table
         var cursor = Cursor.CreateAtStart(this);
         while (!cursor.EndOfTable)
         {
-            var (page, start) = cursor.GetValue();
-            var row = Row.Deserialize(page, start);
+            var row = cursor.GetValue();
             row.PrintRow();
             cursor.Advance();
         }
@@ -458,34 +454,24 @@ class Pager
     }
 }
 
-class Cursor(Table table, int rowNumber)
+class Cursor(Table table, int pageNumber, uint cellNumber)
 {
     public Table Table { get; } = table;
-    public int RowNumber { get; private set; } = rowNumber;
-    public bool EndOfTable => RowNumber >= Table.RowCount;
+    public LeafNode Leaf { get; } = new(table.Pager.RetrievePage(pageNumber));
+    private uint cellNumber = cellNumber;
+    public bool EndOfTable => cellNumber >= Leaf.CellCount;
 
     public static Cursor CreateAtStart(Table table)
     {
-        return new Cursor(table, 0);
+        return new Cursor(table, table.RootPageNumber, 0);
     }
 
     public static Cursor CreateAtEnd(Table table)
     {
-        return new Cursor(table, table.RowCount);
+        var leaf = new LeafNode(table.Pager.RetrievePage(table.RootPageNumber));
+        return new Cursor(table, table.RootPageNumber, leaf.CellCount);
     }
 
-    public (byte[] page, int start) GetValue()
-    {
-        var pageNumber = RowNumber / Constants.ROWS_PER_PAGE;
-        var boxNumber = RowNumber % Constants.ROWS_PER_PAGE;
-        var start = boxNumber * Row.ROW_SIZE;
-        var page = Table.Pager.RetrievePage(pageNumber);
-
-        return (page, start);
-    }
-
-    public void Advance()
-    {
-        RowNumber++;
-    }
+    public Row GetValue() => Leaf.GetRow((int)cellNumber);
+    public void Advance() => cellNumber++;
 }
