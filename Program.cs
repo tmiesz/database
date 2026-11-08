@@ -8,23 +8,9 @@ if (args.Length < 1)
 
 var pager = new Pager(args[0]);
 var table = new Table(pager);
-
-var page = new byte[Constants.PAGE_SIZE];
-LeafNode leaf = new(page);
-leaf.SetKeyForCell(0, 7);
-leaf.SetKeyForCell(1, 9);
-Console.WriteLine(leaf.GetKey(0));
-Console.WriteLine(leaf.GetKey(1));
-Console.WriteLine(string.Join(",", page[10..14]));
-Console.WriteLine(string.Join(",", page[305..309]));
-
-Row.TryCreate(5, "amy", "a@a.io", out var row);
-leaf.StoreRow(row, 1);
-leaf.GetRow(1).PrintRow();
-Console.WriteLine(leaf.GetKey(1));
-
-leaf.CellCount = 3;
-Console.WriteLine(leaf.GetKey(0));
+Console.WriteLine(pager.PageCount);
+pager.RetrievePage(0);
+Console.WriteLine(pager.PageCount);
 
 while (true)
 {
@@ -330,10 +316,25 @@ class Row
     }
 }
 
-class Table(Pager pager)
+class Table
 {
-    public Pager Pager { get; } = pager;
-    public int RowCount { get; private set; } = (int)(pager.Length / Row.ROW_SIZE);
+    public Pager Pager { get; }
+    public int RowCount { get; private set; }
+    public int RootPageNumber { get; } = 0;
+
+    public Table(Pager pager)
+    {
+        Pager = pager;
+        RowCount = (int)(pager.Length / Row.ROW_SIZE);
+        if (pager.PageCount == 0)
+        {
+            var page = pager.RetrievePage(RootPageNumber);
+            var root = new LeafNode(page)
+            {
+                CellCount = 0
+            };
+        }
+    }
 
     public InsertOutcome Insert(Row row)
     {
@@ -385,6 +386,7 @@ class Pager
     public FileStream FileStream { get; }
     private byte[][] Pages { get; } = new byte[Constants.MAX_PAGES][];
     public long Length { get; }
+    public int PageCount { get; private set; }
 
     public Pager(string fileName)
     {
@@ -395,6 +397,12 @@ class Pager
                 FileAccess.ReadWrite
                 );
         Length = FileStream.Length;
+        if (Length % Constants.PAGE_SIZE != 0)
+        {
+            Console.WriteLine("Db file is not a whole number of pages.");
+            Environment.Exit(1);
+        }
+        PageCount = (int)(Length / Constants.PAGE_SIZE);
     }
 
     public byte[] RetrievePage(int pageNumber)
@@ -417,6 +425,9 @@ class Pager
             _ = FileStream.Read(buffer, 0, Constants.PAGE_SIZE);
 
             Pages[pageNumber] = buffer;
+
+            if (pageNumber >= PageCount)
+                PageCount = pageNumber + 1;
 
             return buffer;
         }
