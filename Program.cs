@@ -213,6 +213,7 @@ static class Constants
     private const int ParentPointerSize = 4;
     private const int CellCountSize = 4;
     private const int KeySize = 4;
+
     public const int COMMON_NODE_HEADER_SIZE = NodeTypeSize + IsRootFlagSize + ParentPointerSize;
     public const int CELL_COUNT_OFFSET = COMMON_NODE_HEADER_SIZE;
     public const int LEAF_NODE_VALUE_OFFSET = KeySize;
@@ -223,8 +224,6 @@ static class Constants
 
     public const int MAX_PAGES = 100;
     public const int PAGE_SIZE = 4096;
-    public const int ROWS_PER_PAGE = PAGE_SIZE / Row.ROW_SIZE;
-    public const int TABLE_MAX_ROWS = ROWS_PER_PAGE * MAX_PAGES;
 
     internal static void Print()
     {
@@ -363,16 +362,12 @@ class Table
 
     public void Close()
     {
-        var fullPages = RowCount / Constants.ROWS_PER_PAGE;
-        for (int i = 0; i < fullPages; i++)
+        for (int i = 0; i < Pager.PageCount; i++)
         {
             if (!Pager.IsPageLoaded(i))
                 continue;
-            Pager.Flush(i, Constants.PAGE_SIZE);
+            Pager.Flush(i);
         }
-        var leftoverRows = RowCount % Constants.ROWS_PER_PAGE;
-        if (leftoverRows > 0 && Pager.IsPageLoaded(fullPages))
-            Pager.Flush(fullPages, leftoverRows * Row.ROW_SIZE);
 
         Pager.FileStream.Dispose();
     }
@@ -441,7 +436,7 @@ class Pager
         else return false;
     }
 
-    public void Flush(int pageNumber, int size)
+    public void Flush(int pageNumber)
     {
         if (Pages[pageNumber] is null)
         {
@@ -451,7 +446,7 @@ class Pager
         var offset = pageNumber * Constants.PAGE_SIZE;
         FileStream.Seek(offset, SeekOrigin.Begin);
 
-        FileStream.Write(Pages[pageNumber], 0, size);
+        FileStream.Write(Pages[pageNumber], 0, Constants.PAGE_SIZE);
         FileStream.Flush();
     }
 }
