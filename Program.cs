@@ -165,6 +165,11 @@ class LeafNode(byte[] page)
     private readonly byte[] page = page;
     private static int CellStart(int cell) => Constants.LEAF_NODE_HEADER_SIZE + (cell * Constants.LEAF_NODE_CELL_SIZE);
     private static int RowStart(int cell) => CellStart(cell) + Constants.LEAF_NODE_VALUE_OFFSET;
+    public NodeType NodeType
+    {
+        get => (NodeType)page[Constants.NODE_TYPE_OFFSET];
+        set => page[Constants.NODE_TYPE_OFFSET] = (byte)value;
+    }
 
     public uint CellCount
     {
@@ -217,6 +222,12 @@ enum InsertOutcome
     Error
 }
 
+enum NodeType : byte
+{
+    Internal,
+    Leaf
+}
+
 static class Constants
 {
     private const int NodeTypeSize = 1;
@@ -226,6 +237,7 @@ static class Constants
     private const int KeySize = 4;
 
     public const int COMMON_NODE_HEADER_SIZE = NodeTypeSize + IsRootFlagSize + ParentPointerSize;
+    public const int NODE_TYPE_OFFSET = 0;
     public const int CELL_COUNT_OFFSET = COMMON_NODE_HEADER_SIZE;
     public const int LEAF_NODE_VALUE_OFFSET = KeySize;
     public const int LEAF_NODE_HEADER_SIZE = COMMON_NODE_HEADER_SIZE + CellCountSize;
@@ -336,6 +348,7 @@ class Table
             var page = pager.RetrievePage(RootPageNumber);
             var root = new LeafNode(page)
             {
+                NodeType = NodeType.Leaf,
                 CellCount = 0
             };
         }
