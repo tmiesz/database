@@ -176,8 +176,8 @@ class LeafNode(byte[] page)
         }
     }
 
-    public uint GetKey(int key) =>
-        BitConverter.ToUInt32(page, CellStart(key));
+    public uint GetKey(int cell) =>
+        BitConverter.ToUInt32(page, CellStart(cell));
 
     public void SetKeyForCell(int cell, uint key)
     {
