@@ -199,6 +199,27 @@ class LeafNode(byte[] page)
     {
         row.Serialize(page, RowStart(cell));
     }
+
+    public int FindCell(uint key)
+    {
+        var min = 0;
+        var onePastMax = (int)CellCount;
+
+        while (min != onePastMax)
+        {
+            var middle = (min + onePastMax) / 2;
+            var keyAtMiddle = GetKey(middle);
+
+            if (key == keyAtMiddle)
+                return middle;
+            if (key < keyAtMiddle)
+                onePastMax = middle;
+            else
+                min = middle + 1;
+        }
+
+        return min;
+    }
 }
 
 enum Kind
