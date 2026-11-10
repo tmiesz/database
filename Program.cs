@@ -220,6 +220,14 @@ class LeafNode(byte[] page)
 
         return min;
     }
+
+    public void MakeRoomAt(int cell)
+    {
+        for (int i = (int)CellCount - 1; i >= cell; i--)
+        {
+            Array.Copy(page, CellStart(i), page, CellStart(i + 1), Constants.LEAF_NODE_CELL_SIZE);
+        }
+    }
 }
 
 enum Kind
@@ -377,13 +385,14 @@ class Table
 
     public InsertOutcome Insert(Row row)
     {
-        var cursor = Cursor.CreateAtEnd(this);
+        var cursor = Cursor.CreateAtKey(this, row.Id);
         var leaf = cursor.Leaf;
 
         if (leaf.CellCount >= Constants.LEAF_NODE_MAX_CELLS)
             return InsertOutcome.Error;
 
         var cellNumber = cursor.CellNumber;
+        leaf.MakeRoomAt((int)cellNumber);
         leaf.SetKeyForCell((int)cellNumber, row.Id);
         leaf.StoreRow(row, (int)cellNumber);
 
