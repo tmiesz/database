@@ -57,7 +57,7 @@ static void Execute(Statement statement, Table table)
             if (result == InsertOutcome.Error)
                 Console.WriteLine("Error: Table full.");
             if (result == InsertOutcome.Duplicate)
-                Console.WriteLine("Error: Duplicate key");
+                Console.WriteLine("Error: Duplicate key.");
             else Console.WriteLine("Executed.");
 
             break;
