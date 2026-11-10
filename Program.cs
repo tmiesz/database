@@ -56,6 +56,8 @@ static void Execute(Statement statement, Table table)
 
             if (result == InsertOutcome.Error)
                 Console.WriteLine("Error: Table full.");
+            if (result == InsertOutcome.Duplicate)
+                Console.WriteLine("Error: Duplicate key");
             else Console.WriteLine("Executed.");
 
             break;
@@ -248,6 +250,7 @@ enum Outcome
 enum InsertOutcome
 {
     Success,
+    Duplicate,
     Error
 }
 
@@ -394,6 +397,9 @@ class Table
             return InsertOutcome.Error;
 
         var cellNumber = cursor.CellNumber;
+        if (cellNumber < leaf.CellCount && leaf.GetKey((int)cellNumber) == row.Id)
+            return InsertOutcome.Duplicate;
+
         leaf.MakeRoomAt((int)cellNumber);
         leaf.SetKeyForCell((int)cellNumber, row.Id);
         leaf.StoreRow(row, (int)cellNumber);
