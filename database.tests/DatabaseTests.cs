@@ -50,18 +50,18 @@ public class DatabaseTests
     }
 
     [Fact]
-    public async Task InsertsOverTableSize()
+    public async Task DuplicateKeyFails()
     {
         var db = GenerateDatabasePath();
-        var commands = Enumerable.Range(1, 1401)
-            .Select(i => $"insert {i} user{i} person{i}@example.com")
-            .Append(".exit")
-            .ToArray();
-
-        var (lines, exitCode, error) = await RunScript(db, commands);
+        var (lines, exitCode, error) = await RunScript(
+                db,
+                "insert 1 user1 person1@example.com",
+                "insert 1 user1 person1@example.com",
+                "select",
+                ".exit");
 
         Assert.True(exitCode == 0, error);
-        Assert.Equal("db > Error: Table full.", lines[^2]);
+        Assert.Equal("db > Error: Duplicate key.", lines[^4]);
     }
 
     [Fact]
