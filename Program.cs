@@ -523,12 +523,6 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
         return new Cursor(table, table.RootPageNumber, 0);
     }
 
-    public static Cursor CreateAtEnd(Table table)
-    {
-        var leaf = new LeafNode(table.Pager.RetrievePage(table.RootPageNumber));
-        return new Cursor(table, table.RootPageNumber, leaf.CellCount);
-    }
-
     public static Cursor CreateAtKey(Table table, uint key)
     {
         var leaf = new LeafNode(table.Pager.RetrievePage(table.RootPageNumber));
