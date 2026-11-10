@@ -315,6 +315,8 @@ class Row
 
     public void Serialize(byte[] buffer, int start)
     {
+        Array.Clear(buffer, start, ROW_SIZE);
+
         var idBytes = BitConverter.GetBytes(Id);
         Array.Copy(idBytes, 0, buffer, start, idBytes.Length);
 
