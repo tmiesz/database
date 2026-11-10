@@ -65,6 +65,24 @@ public class DatabaseTests
     }
 
     [Fact]
+    public async Task SortedOrder()
+    {
+        var db = GenerateDatabasePath();
+        var (lines, exitCode, error) = await RunScript(
+                db,
+                "insert 3 user3 person3@example.com",
+                "insert 1 user1 person1@example.com",
+                "insert 2 user2 person2@example.com",
+                "select",
+                ".exit");
+
+        Assert.True(exitCode == 0, error);
+        Assert.Equal("(3, user3, person3@example.com)", lines[^3]);
+        Assert.Equal("(2, user2, person2@example.com)", lines[^4]);
+        Assert.Equal("db > (1, user1, person1@example.com)", lines[^5]);
+    }
+
+    [Fact]
     public async Task InsertsMaximumLength()
     {
         var db = GenerateDatabasePath();
