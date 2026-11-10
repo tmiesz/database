@@ -512,6 +512,20 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
         return new Cursor(table, table.RootPageNumber, leaf.CellCount);
     }
 
+    public static Cursor CreateAtKey(Table table, uint key)
+    {
+        var leaf = new LeafNode(table.Pager.RetrievePage(table.RootPageNumber));
+        if (leaf.NodeType != NodeType.Leaf)
+        {
+            Console.WriteLine("Internal nodes don't exists yet.");
+            Environment.Exit(1);
+        }
+
+        var cell = leaf.FindCell(key);
+
+        return new Cursor(table, table.RootPageNumber, (uint)cell);
+    }
+
     public Row GetValue() => Leaf.GetRow((int)CellNumber);
     public void Advance() => CellNumber++;
 }
