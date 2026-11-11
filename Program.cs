@@ -410,12 +410,15 @@ class Table
         var cursor = Cursor.CreateAtKey(this, row.Id);
         var leaf = cursor.Leaf;
 
-        if (leaf.CellCount >= Constants.LEAF_NODE_MAX_CELLS)
-            return InsertOutcome.Error;
-
         var cellNumber = cursor.CellNumber;
         if (cellNumber < leaf.CellCount && leaf.GetKey((int)cellNumber) == row.Id)
             return InsertOutcome.Duplicate;
+
+        if (leaf.CellCount >= Constants.LEAF_NODE_MAX_CELLS)
+        {
+            SplitAndInsert(cursor, row);
+            return InsertOutcome.Success;
+        }
 
         leaf.MakeRoomAt((int)cellNumber);
         leaf.SetKeyForCell((int)cellNumber, row.Id);
@@ -447,6 +450,16 @@ class Table
         }
 
         Pager.FileStream.Dispose();
+    }
+
+    public void SplitAndInsert(Cursor cursor, Row row)
+    {
+        var newPageNumber = Pager.GetUnusedPageNumber();
+
+        var page = Pager.RetrievePage(newPageNumber);
+        var leaf = new LeafNode(page);
+
+        leaf.Initialize();
     }
 }
 
@@ -525,6 +538,11 @@ class Pager
 
         FileStream.Write(Pages[pageNumber], 0, Constants.PAGE_SIZE);
         FileStream.Flush();
+    }
+
+    public int GetUnusedPageNumber()
+    {
+        return PageCount;
     }
 }
 
