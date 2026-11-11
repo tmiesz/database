@@ -243,6 +243,11 @@ class LeafNode(byte[] page)
         IsRoot = false;
         CellCount = 0;
     }
+
+    public void CopyCellTo(int fromCell, LeafNode destination, int toCell)
+    {
+        Array.Copy(page, CellStart(fromCell), destination.page, CellStart(toCell), Constants.LEAF_NODE_CELL_SIZE);
+    }
 }
 
 enum Kind
@@ -454,12 +459,44 @@ class Table
 
     public void SplitAndInsert(Cursor cursor, Row row)
     {
+        var oldLeaf = cursor.Leaf;
         var newPageNumber = Pager.GetUnusedPageNumber();
 
         var page = Pager.RetrievePage(newPageNumber);
-        var leaf = new LeafNode(page);
+        var newLeaf = new LeafNode(page);
 
-        leaf.Initialize();
+        newLeaf.Initialize();
+
+        int insertCell = (int)cursor.CellNumber;
+
+        LeafNode destination;
+        int cellInDestination;
+        for (int i = Constants.LEAF_NODE_MAX_CELLS; i >= 0; i--)
+        {
+
+            if (i >= Constants.LEAF_NODE_LEFT_SPLIT_COUNT)
+                destination = newLeaf;
+            else destination = oldLeaf;
+
+            cellInDestination = i % Constants.LEAF_NODE_LEFT_SPLIT_COUNT;
+
+            if (i == insertCell)
+            {
+                destination.SetKeyForCell(cellInDestination, row.Id);
+                destination.StoreRow(row, cellInDestination);
+            }
+            else if (i > insertCell)
+            {
+                oldLeaf.CopyCellTo(i - 1, destination, cellInDestination);
+            }
+            else
+            {
+                oldLeaf.CopyCellTo(i, destination, cellInDestination);
+            }
+        }
+
+        oldLeaf.CellCount = Constants.LEAF_NODE_LEFT_SPLIT_COUNT;
+        newLeaf.CellCount = Constants.LEAF_NODE_RIGHT_SPLIT_COUNT;
     }
 }
 
