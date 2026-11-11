@@ -126,7 +126,7 @@ static void HandleMetaInput(string input, Table table)
         case "btree":
             var leaf = new LeafNode(table.Pager.RetrievePage(table.RootPageNumber));
             Console.WriteLine("Tree:");
-            Console.WriteLine($"leaf (size {leaf.CellCount})");
+            Console.WriteLine($"leaf (size {leaf.CellCount}) root={leaf.IsRoot}");
 
             for (int i = 0; i < leaf.CellCount; i++)
             {
@@ -167,6 +167,12 @@ class LeafNode(byte[] page)
     private readonly byte[] page = page;
     private static int CellStart(int cell) => Constants.LEAF_NODE_HEADER_SIZE + (cell * Constants.LEAF_NODE_CELL_SIZE);
     private static int RowStart(int cell) => CellStart(cell) + Constants.LEAF_NODE_VALUE_OFFSET;
+
+    public bool IsRoot
+    {
+        get => page[Constants.IS_ROOT_OFFSET] != 0;
+        set => page[Constants.IS_ROOT_OFFSET] = value ? (byte)1 : (byte)0;
+    }
     public NodeType NodeType
     {
         get => (NodeType)page[Constants.NODE_TYPE_OFFSET];
@@ -270,6 +276,7 @@ static class Constants
 
     public const int COMMON_NODE_HEADER_SIZE = NodeTypeSize + IsRootFlagSize + ParentPointerSize;
     public const int NODE_TYPE_OFFSET = 0;
+    public const int IS_ROOT_OFFSET = NODE_TYPE_OFFSET + NodeTypeSize;
     public const int CELL_COUNT_OFFSET = COMMON_NODE_HEADER_SIZE;
     public const int LEAF_NODE_VALUE_OFFSET = KeySize;
     public const int LEAF_NODE_HEADER_SIZE = COMMON_NODE_HEADER_SIZE + CellCountSize;
@@ -387,6 +394,7 @@ class Table
             var root = new LeafNode(page)
             {
                 NodeType = NodeType.Leaf,
+                IsRoot = true,
                 CellCount = 0
             };
         }
