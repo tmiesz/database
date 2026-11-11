@@ -236,6 +236,13 @@ class LeafNode(byte[] page)
             Array.Copy(page, CellStart(i), page, CellStart(i + 1), Constants.LEAF_NODE_CELL_SIZE);
         }
     }
+
+    public void Initialize()
+    {
+        NodeType = NodeType.Leaf;
+        IsRoot = false;
+        CellCount = 0;
+    }
 }
 
 enum Kind
@@ -391,12 +398,10 @@ class Table
         if (pager.PageCount == 0)
         {
             var page = pager.RetrievePage(RootPageNumber);
-            var root = new LeafNode(page)
-            {
-                NodeType = NodeType.Leaf,
-                IsRoot = true,
-                CellCount = 0
-            };
+            var root = new LeafNode(page);
+            root.Initialize();
+
+            root.IsRoot = true;
         }
     }
 
