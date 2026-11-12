@@ -623,7 +623,7 @@ class Table
         root.IsRoot = true;
         root.NumKeys = 1;
         root.SetChild(0, leftChildPageNumber);
-        root.SetKeyForCell(0, (uint)leftChild.MaxKey);
+        root.SetKeyForCell(0, leftChild.MaxKey);
         root.RightChild = rightChildPageNumber;
     }
 }
