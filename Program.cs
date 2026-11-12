@@ -54,8 +54,6 @@ static void Execute(Statement statement, Table table)
         case Kind.INSERT:
             var result = table.Insert(statement.Row!);
 
-            if (result == InsertOutcome.Error)
-                Console.WriteLine("Error: Table full.");
             if (result == InsertOutcome.Duplicate)
                 Console.WriteLine("Error: Duplicate key.");
             else Console.WriteLine("Executed.");
@@ -346,7 +344,6 @@ enum InsertOutcome
 {
     Success,
     Duplicate,
-    Error
 }
 
 enum NodeType : byte
