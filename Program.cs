@@ -250,6 +250,45 @@ class LeafNode(byte[] page)
     }
 }
 
+class InternalNode(byte[] page)
+{
+    public bool IsRoot
+    {
+        get => page[Constants.IS_ROOT_OFFSET] != 0;
+        set => page[Constants.IS_ROOT_OFFSET] = value ? (byte)1 : (byte)0;
+    }
+    public NodeType NodeType
+    {
+        get => (NodeType)page[Constants.NODE_TYPE_OFFSET];
+        set => page[Constants.NODE_TYPE_OFFSET] = (byte)value;
+    }
+    public uint NumKeys
+    {
+        get => BitConverter.ToUInt32(page, Constants.INTERNAL_NODE_NUM_KEYS_OFFSET);
+        set
+        {
+            var bytes = BitConverter.GetBytes(value);
+            Array.Copy(bytes, 0, page, Constants.INTERNAL_NODE_NUM_KEYS_OFFSET, bytes.Length);
+        }
+    }
+    public int RightChild
+    {
+        get => BitConverter.ToInt32(page, Constants.INTERNAL_NODE_RIGHT_CHILD_OFFSET);
+        set
+        {
+            var bytes = BitConverter.GetBytes(value);
+            Array.Copy(bytes, 0, page, Constants.INTERNAL_NODE_RIGHT_CHILD_OFFSET, bytes.Length);
+        }
+    }
+
+    public void Initialize()
+    {
+        NodeType = NodeType.Internal;
+        IsRoot = false;
+        NumKeys = 0;
+    }
+}
+
 enum Kind
 {
     SELECT,
