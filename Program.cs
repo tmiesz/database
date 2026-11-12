@@ -124,15 +124,8 @@ static void HandleMetaInput(string input, Table table)
             Constants.Print();
             break;
         case "btree":
-            var leaf = new LeafNode(table.Pager.RetrievePage(table.RootPageNumber));
             Console.WriteLine("Tree:");
-            Console.WriteLine($"leaf (size {leaf.CellCount}) root={leaf.IsRoot}");
-
-            for (int i = 0; i < leaf.CellCount; i++)
-            {
-                Console.Write($"  - {i} : ");
-                Console.WriteLine($"{leaf.GetKey(i)}");
-            }
+            table.PrintTree(table.RootPageNumber, 0);
             break;
         default:
             Console.WriteLine($"Unrecognized command '{input}'.");
@@ -625,6 +618,49 @@ class Table
         root.SetChild(0, leftChildPageNumber);
         root.SetKeyForCell(0, leftChild.MaxKey);
         root.RightChild = rightChildPageNumber;
+    }
+
+    public void PrintTree(int pageNumber, int indentationLevel)
+    {
+        var page = Pager.RetrievePage(pageNumber);
+
+        var nodeType = new LeafNode(page).NodeType;
+
+        switch (nodeType)
+        {
+            case NodeType.Internal:
+                var node = new InternalNode(page);
+                Indent(indentationLevel);
+                Console.WriteLine($"- internal (size {node.NumKeys})");
+                for (int i = 0; i < node.NumKeys; i++)
+                {
+                    PrintTree(node.GetChild(i), indentationLevel + 1);
+                    Indent(indentationLevel + 1);
+                    Console.WriteLine($"- key {node.GetKey(i)}");
+                }
+                PrintTree(node.RightChild, indentationLevel + 1);
+                break;
+            case NodeType.Leaf:
+                var leaf = new LeafNode(page);
+                Indent(indentationLevel);
+                Console.WriteLine($"- leaf (size {leaf.CellCount})");
+                for (int i = 0; i < leaf.CellCount; i++)
+                {
+                    Indent(indentationLevel + 1);
+                    Console.WriteLine($"- {leaf.GetKey(i)}");
+                }
+                break;
+            default:
+                Console.WriteLine("Unexpected node type.");
+                Environment.Exit(1);
+                break;
+        }
+    }
+
+    private static void Indent(int level)
+    {
+        for (int i = 0; i < level; i++)
+            Console.Write("  ");
     }
 }
 
