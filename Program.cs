@@ -167,6 +167,7 @@ class LeafNode(byte[] page)
     private readonly byte[] page = page;
     private static int CellStart(int cell) => Constants.LEAF_NODE_HEADER_SIZE + (cell * Constants.LEAF_NODE_CELL_SIZE);
     private static int RowStart(int cell) => CellStart(cell) + Constants.LEAF_NODE_VALUE_OFFSET;
+    public uint MaxKey => GetKey((int)CellCount - 1);
 
     public bool IsRoot
     {
@@ -596,6 +597,34 @@ class Table
 
         oldLeaf.CellCount = Constants.LEAF_NODE_LEFT_SPLIT_COUNT;
         newLeaf.CellCount = Constants.LEAF_NODE_RIGHT_SPLIT_COUNT;
+
+        if (oldLeaf.IsRoot)
+            CreateNewRoot(newPageNumber);
+        else
+        {
+            Console.WriteLine("TODO: Need to implement updating parent after split");
+            Environment.Exit(1);
+        }
+    }
+
+    public void CreateNewRoot(int rightChildPageNumber)
+    {
+        var rootPage = Pager.RetrievePage(RootPageNumber);
+        var leftChildPageNumber = Pager.GetUnusedPageNumber();
+        var leftChildPage = Pager.RetrievePage(leftChildPageNumber);
+
+        Array.Copy(rootPage, leftChildPage, Constants.PAGE_SIZE);
+        var leftChild = new LeafNode(leftChildPage)
+        {
+            IsRoot = false
+        };
+        var root = new InternalNode(rootPage);
+        root.Initialize();
+        root.IsRoot = true;
+        root.NumKeys = 1;
+        root.SetChild(0, leftChildPageNumber);
+        root.SetKeyForCell(0, (uint)leftChild.MaxKey);
+        root.RightChild = rightChildPageNumber;
     }
 }
 
