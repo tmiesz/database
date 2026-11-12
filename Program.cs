@@ -181,11 +181,11 @@ class LeafNode(byte[] page)
 
     public uint CellCount
     {
-        get => BitConverter.ToUInt32(page, Constants.CELL_COUNT_OFFSET);
+        get => BitConverter.ToUInt32(page, Constants.LEAF_NODE_CELL_COUNT_OFFSET);
         set
         {
             var bytes = BitConverter.GetBytes(value);
-            Array.Copy(bytes, 0, page, Constants.CELL_COUNT_OFFSET, bytes.Length);
+            Array.Copy(bytes, 0, page, Constants.LEAF_NODE_CELL_COUNT_OFFSET, bytes.Length);
         }
     }
 
@@ -285,11 +285,24 @@ static class Constants
     private const int ParentPointerSize = 4;
     private const int CellCountSize = 4;
     private const int KeySize = 4;
+    private const int InternalNodeNumKeysSize = 4;
+    private const int InternalNodeChildPointerSize = 4;
 
     public const int COMMON_NODE_HEADER_SIZE = NodeTypeSize + IsRootFlagSize + ParentPointerSize;
     public const int NODE_TYPE_OFFSET = 0;
     public const int IS_ROOT_OFFSET = NODE_TYPE_OFFSET + NodeTypeSize;
-    public const int CELL_COUNT_OFFSET = COMMON_NODE_HEADER_SIZE;
+
+    public const int INTERNAL_NODE_NUM_KEYS_SIZE = InternalNodeNumKeysSize;
+    public const int INTERNAL_NODE_NUM_KEYS_OFFSET = COMMON_NODE_HEADER_SIZE;
+    public const int INTERNAL_NODE_RIGHT_CHILD_SIZE = InternalNodeChildPointerSize;
+    public const int INTERNAL_NODE_RIGHT_CHILD_OFFSET = COMMON_NODE_HEADER_SIZE + INTERNAL_NODE_NUM_KEYS_SIZE;
+    public const int INTERNAL_NODE_HEADER_SIZE = COMMON_NODE_HEADER_SIZE + INTERNAL_NODE_NUM_KEYS_SIZE + INTERNAL_NODE_RIGHT_CHILD_SIZE;
+    public const int INTERNAL_NODE_CELL_CHILD_SIZE = InternalNodeChildPointerSize;
+    public const int INTERNAL_NODE_KEY_OFFSET = INTERNAL_NODE_CELL_CHILD_SIZE;
+    public const int INTERNAL_NODE_CELL_SIZE = INTERNAL_NODE_CELL_CHILD_SIZE + KeySize;
+    public const int INTERNAL_NODE_MAX_CELLS = (PAGE_SIZE - INTERNAL_NODE_HEADER_SIZE) / INTERNAL_NODE_CELL_SIZE;
+
+    public const int LEAF_NODE_CELL_COUNT_OFFSET = COMMON_NODE_HEADER_SIZE;
     public const int LEAF_NODE_VALUE_OFFSET = KeySize;
     public const int LEAF_NODE_HEADER_SIZE = COMMON_NODE_HEADER_SIZE + CellCountSize;
     public const int LEAF_NODE_CELL_SIZE = KeySize + Row.ROW_SIZE;
@@ -312,6 +325,9 @@ static class Constants
         Console.WriteLine($"{nameof(LEAF_NODE_MAX_CELLS)}: {LEAF_NODE_MAX_CELLS}");
         Console.WriteLine($"{nameof(LEAF_NODE_RIGHT_SPLIT_COUNT)}: {LEAF_NODE_RIGHT_SPLIT_COUNT}");
         Console.WriteLine($"{nameof(LEAF_NODE_LEFT_SPLIT_COUNT)}: {LEAF_NODE_LEFT_SPLIT_COUNT}");
+        Console.WriteLine($"{nameof(INTERNAL_NODE_HEADER_SIZE)}: {INTERNAL_NODE_HEADER_SIZE}");
+        Console.WriteLine($"{nameof(INTERNAL_NODE_CELL_SIZE)}: {INTERNAL_NODE_CELL_SIZE}");
+        Console.WriteLine($"{nameof(INTERNAL_NODE_MAX_CELLS)}: {INTERNAL_NODE_MAX_CELLS}");
     }
 }
 
