@@ -252,6 +252,8 @@ class LeafNode(byte[] page)
 
 class InternalNode(byte[] page)
 {
+    private static int CellStart(int cell) => Constants.INTERNAL_NODE_HEADER_SIZE + (cell * Constants.INTERNAL_NODE_CELL_SIZE);
+
     public bool IsRoot
     {
         get => page[Constants.IS_ROOT_OFFSET] != 0;
@@ -286,6 +288,48 @@ class InternalNode(byte[] page)
         NodeType = NodeType.Internal;
         IsRoot = false;
         NumKeys = 0;
+    }
+
+    public uint GetKey(int cell) =>
+        BitConverter.ToUInt32(page, CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET);
+
+    public void SetKeyForCell(int cell, uint key)
+    {
+        var bytes = BitConverter.GetBytes(key);
+        Array.Copy(bytes, 0, page, CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET, bytes.Length);
+    }
+
+    public int GetChild(int childNumber)
+    {
+        if (childNumber > NumKeys)
+        {
+            Console.WriteLine($"Tried to access child number {childNumber} > num keys {NumKeys}");
+            Environment.Exit(1);
+            return 0;
+        }
+        if (childNumber == NumKeys)
+        {
+            return RightChild;
+        }
+        return BitConverter.ToInt32(page, CellStart(childNumber));
+    }
+
+    public void SetChild(int childNumber, int pageNumber)
+    {
+        if (childNumber > NumKeys)
+        {
+            Console.WriteLine($"Tried to access child number {childNumber} > num keys {NumKeys}");
+            Environment.Exit(1);
+        }
+        else if (childNumber == NumKeys)
+        {
+            RightChild = pageNumber;
+        }
+        else
+        {
+            var bytes = BitConverter.GetBytes(pageNumber);
+            Array.Copy(bytes, 0, page, CellStart(childNumber), bytes.Length);
+        }
     }
 }
 
