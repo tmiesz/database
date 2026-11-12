@@ -764,7 +764,7 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
         var leaf = new LeafNode(table.Pager.RetrievePage(table.RootPageNumber));
         if (leaf.NodeType != NodeType.Leaf)
         {
-            Console.WriteLine("Internal nodes don't exists yet.");
+            Console.WriteLine("TODO: Need to implement searching an internal node.");
             Environment.Exit(1);
         }
 
