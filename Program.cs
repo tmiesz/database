@@ -337,6 +337,8 @@ internal abstract class Node(byte[] page)
         get => (NodeType)Page[Constants.NODE_TYPE_OFFSET];
         set => Page[Constants.NODE_TYPE_OFFSET] = (byte)value;
     }
+    public static NodeType GetNodeType(byte[] page) =>
+        (NodeType)page[Constants.NODE_TYPE_OFFSET];
 }
 
 enum Kind
@@ -772,18 +774,30 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
 
     public static Cursor CreateAtKey(Table table, uint key)
     {
-        var leaf = new LeafNode(table.Pager.RetrievePage(table.RootPageNumber));
-        if (leaf.NodeType != NodeType.Leaf)
-        {
-            Console.WriteLine("TODO: Need to implement searching an internal node.");
-            Environment.Exit(1);
-        }
-
-        var cell = leaf.FindCell(key);
-
-        return new Cursor(table, table.RootPageNumber, (uint)cell);
+        return FindInPage(table, table.RootPageNumber, key);
     }
 
     public Row GetValue() => Leaf.GetRow((int)CellNumber);
     public void Advance() => CellNumber++;
+
+    private static Cursor FindInPage(Table table, int pageNumber, uint key)
+    {
+        var page = table.Pager.RetrievePage(pageNumber);
+        var type = Node.GetNodeType(page);
+
+        switch (type)
+        {
+            case NodeType.Leaf:
+                var leaf = new LeafNode(page);
+                var cell = leaf.FindCell(key);
+                return new Cursor(table, pageNumber, (uint)cell);
+            case NodeType.Internal:
+                var node = new InternalNode(page);
+                var childNumber = node.FindChildNumber(key);
+                var childPageNumber = node.GetChild(childNumber);
+                return FindInPage(table, childPageNumber, key);
+            default:
+                throw new InvalidOperationException("Unexpected node type.");
+        }
+    }
 }
