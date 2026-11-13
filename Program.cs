@@ -690,7 +690,7 @@ class Pager
     {
         if (pageNumber >= Constants.MAX_PAGES)
         {
-            Console.WriteLine($"Tried to fetch page number out of bonds. {pageNumber} > {Constants.MAX_PAGES - 1}");
+            Console.WriteLine($"Tried to fetch page number out of bounds. {pageNumber} > {Constants.MAX_PAGES - 1}");
             Environment.Exit(1);
         }
 
