@@ -147,4 +147,31 @@ public class DatabaseTests
         Assert.Equal("db > Executed.", lines[^2]);
         Assert.Equal($"db > (1, {name}, {email})", lines2[^3]);
     }
+
+    [Fact]
+    public async Task PrintsTreeAfterSplit()
+    {
+        var db = GenerateDatabasePath();
+
+        var (lines, exitCode, error) = await RunScript(
+            db,
+            [.. Enumerable.Range(1, 14).Select(i => $"insert {i} user{i} person{i}@example.com"),
+            ".btree",
+             ".exit"]);
+
+        Assert.True(exitCode == 0, error);
+
+        string[] expected =
+        [
+            "db > Tree:",
+            "- internal (size 1)",
+            "  - leaf (size 7)",
+            .. Enumerable.Range(1, 7).Select(i => $"    - {i}"),
+            "  - key 7",
+            "  - leaf (size 7)",
+            .. Enumerable.Range(8, 7).Select(i => $"    - {i}"),
+        ];
+
+        Assert.Equal(expected, lines[^20..^1]);
+    }
 }
