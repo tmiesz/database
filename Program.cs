@@ -295,6 +295,25 @@ class InternalNode(byte[] page) : Node(page)
         }
     }
 
+    public int FindChildNumber(uint key)
+    {
+        var min = 0;
+        var onePastMax = (int)NumKeys;
+
+        while (min != onePastMax)
+        {
+            var middle = (min + onePastMax) / 2;
+            var keyToRight = GetKey(middle);
+
+            if (keyToRight >= key)
+                onePastMax = middle;
+            else
+                min = middle + 1;
+        }
+
+        return min;
+    }
+
     private void ValidateChildNumber(int childNumber)
     {
         if (childNumber > NumKeys)
