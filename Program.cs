@@ -305,13 +305,9 @@ class InternalNode(byte[] page) : Node(page)
     }
 }
 
-internal class Node
+internal abstract class Node(byte[] page)
 {
-    protected byte[] Page { get; }
-    protected Node(byte[] page)
-    {
-        Page = page;
-    }
+    protected byte[] Page { get; } = page;
     public bool IsRoot
     {
         get => Page[Constants.IS_ROOT_OFFSET] != 0;
