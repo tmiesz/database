@@ -159,6 +159,16 @@ class LeafNode(byte[] page) : Node(page)
     private static int RowStart(int cell) => CellStart(cell) + Constants.LEAF_NODE_VALUE_OFFSET;
     public uint MaxKey => GetKey((int)CellCount - 1);
 
+    public int NextLeaf
+    {
+        get => BitConverter.ToInt32(Page, Constants.LEAF_NODE_NEXT_LEAF_OFFSET);
+        set
+        {
+            var bytes = BitConverter.GetBytes(value);
+            Array.Copy(bytes, 0, Page, Constants.LEAF_NODE_NEXT_LEAF_OFFSET, bytes.Length);
+        }
+    }
+
     public uint CellCount
     {
         get => BitConverter.ToUInt32(Page, Constants.LEAF_NODE_CELL_COUNT_OFFSET);
@@ -221,6 +231,7 @@ class LeafNode(byte[] page) : Node(page)
     {
         NodeType = NodeType.Leaf;
         IsRoot = false;
+        NextLeaf = 0;
         CellCount = 0;
     }
 
@@ -575,6 +586,8 @@ class Table
         var newLeaf = new LeafNode(page);
 
         newLeaf.Initialize();
+        newLeaf.NextLeaf = oldLeaf.NextLeaf;
+        oldLeaf.NextLeaf = newPageNumber;
 
         int insertCell = (int)cursor.CellNumber;
 
