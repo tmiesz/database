@@ -779,8 +779,9 @@ class Pager
 class Cursor(Table table, int pageNumber, uint initialCellNumber)
 {
     public Table Table { get; } = table;
-    public LeafNode Leaf { get; } = new(table.Pager.RetrievePage(pageNumber));
+    public LeafNode Leaf { get; private set; } = new(table.Pager.RetrievePage(pageNumber));
     public uint CellNumber { get; private set; } = initialCellNumber;
+    public int PageNumber { get; private set; } = pageNumber;
     public bool EndOfTable => CellNumber >= Leaf.CellCount;
 
     public static Cursor CreateAtStart(Table table)
@@ -794,7 +795,23 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
     }
 
     public Row GetValue() => Leaf.GetRow((int)CellNumber);
-    public void Advance() => CellNumber++;
+
+    public void Advance()
+    {
+        CellNumber++;
+
+        if (CellNumber >= Leaf.CellCount)
+        {
+            var nextPageNumber = Leaf.NextLeaf;
+
+            if (nextPageNumber != 0)
+            {
+                PageNumber = nextPageNumber;
+                Leaf = new LeafNode(Table.Pager.RetrievePage(PageNumber));
+                CellNumber = 0;
+            }
+        }
+    }
 
     private static Cursor FindInPage(Table table, int pageNumber, uint key)
     {
