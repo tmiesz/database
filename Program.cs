@@ -769,7 +769,7 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
 
     public static Cursor CreateAtStart(Table table)
     {
-        return new Cursor(table, table.RootPageNumber, 0);
+        return FindInPage(table, table.RootPageNumber, 0);
     }
 
     public static Cursor CreateAtKey(Table table, uint key)
