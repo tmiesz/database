@@ -201,4 +201,27 @@ public class DatabaseTests
 
         Assert.Equal(expected, lines[^21..^1]);
     }
+
+    [Fact]
+    public async Task SelectsPrintsAllRows()
+    {
+        var db = GenerateDatabasePath();
+
+        var (lines, exitCode, error) = await RunScript(
+            db,
+            [.. Enumerable.Range(1, 15).Select(i => $"insert {i} user{i} person{i}@example.com"),
+            "select",
+            ".exit"]);
+
+        Assert.True(exitCode == 0, error);
+
+        string[] expected =
+        [
+            "db > (1, user1, person1@example.com)",
+            .. Enumerable.Range(2, 14).Select(i => $"({i}, user{i}, person{i}@example.com)"),
+            "Executed.",
+        ];
+
+        Assert.Equal(expected, lines[^17..^1]);
+    }
 }
