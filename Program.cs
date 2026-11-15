@@ -288,7 +288,7 @@ class InternalNode(byte[] page) : Node(page)
 
         if (child == Constants.INVALID_PAGE_NUMBER)
         {
-            Console.WriteLine($"Tried to access child number {childNumber}, but is is an invalid page.");
+            Console.WriteLine($"Tried to access child number {childNumber}, but it is an invalid page.");
             Environment.Exit(1);
         }
         return child;
