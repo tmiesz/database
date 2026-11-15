@@ -702,13 +702,19 @@ class Table
 
         if (originalNumKeys >= Constants.INTERNAL_NODE_MAX_CELLS)
         {
+            InternalNodeSplitAndInsert(parentPageNumber, childPageNumber);
+            return;
+        }
 
-            Console.WriteLine("TODO: Need to implement splitting internal node.");
-            Environment.Exit(1);
+        var rightChildPageNumber = parent.RightChild;
+
+        if (rightChildPageNumber == Constants.INVALID_PAGE_NUMBER)
+        {
+            parent.RightChild = childPageNumber;
+            return;
         }
 
         parent.NumKeys = originalNumKeys + 1;
-        var rightChildPageNumber = parent.RightChild;
         var rightChild = Pager.RetrievePage(rightChildPageNumber);
         var rightChildMaxKey = GetNodeMaxKey(rightChild);
 
@@ -726,6 +732,12 @@ class Table
             parent.SetChild(index, childPageNumber);
             parent.SetKeyForCell(index, childMaxKey);
         }
+    }
+
+    public void InternalNodeSplitAndInsert(int parentPageNumber, int childPageNumber)
+    {
+        Console.WriteLine("TODO: Need to implement splitting internal node.");
+        Environment.Exit(1);
     }
 
     public uint GetNodeMaxKey(byte[] page)
