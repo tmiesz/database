@@ -224,4 +224,38 @@ public class DatabaseTests
 
         Assert.Equal(expected, lines[^17..^1]);
     }
+
+    [Fact]
+    public async Task PrintsFourLeafTree()
+    {
+        var db = GenerateDatabasePath();
+
+        int[] ids = [18, 7, 10, 29, 23, 4, 14, 30, 15, 26, 22, 19, 2, 1, 21, 11, 6, 20, 5, 8, 9, 3, 12, 27, 17, 16, 13, 24, 25, 28];
+        var (lines, exitCode, error) = await RunScript(
+            db,
+            [.. ids.Select(i => $"insert {i} user{i} person{i}@example.com"),
+            ".btree",
+            ".exit"]);
+
+        Assert.True(exitCode == 0, error);
+
+        string[] expected =
+        [
+            "db > Tree:",
+            "- internal (size 3)",
+            "  - leaf (size 7)",
+            .. Enumerable.Range(1, 7).Select(i => $"    - {i}"),
+            "  - key 7",
+            "  - leaf (size 8)",
+            .. Enumerable.Range(8, 8).Select(i => $"    - {i}"),
+            "  - key 15",
+            "  - leaf (size 7)",
+            .. Enumerable.Range(16, 7).Select(i => $"    - {i}"),
+            "  - key 22",
+            "  - leaf (size 8)",
+            .. Enumerable.Range(23, 8).Select(i => $"    - {i}"),
+        ];
+
+        Assert.Equal(expected, lines[^40..^1]);
+    }
 }
