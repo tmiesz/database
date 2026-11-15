@@ -284,12 +284,14 @@ class InternalNode(byte[] page) : Node(page)
     public int GetChild(int childNumber)
     {
         ValidateChildNumber(childNumber);
+        var child = childNumber == NumKeys ? RightChild : BitConverter.ToInt32(Page, CellStart(childNumber));
 
-        if (childNumber == NumKeys)
+        if (child == Constants.INVALID_PAGE_NUMBER)
         {
-            return RightChild;
+            Console.WriteLine($"Tried to access child number {childNumber}, but is is an invalid page.");
+            Environment.Exit(1);
         }
-        return BitConverter.ToInt32(Page, CellStart(childNumber));
+        return child;
     }
 
     public void SetChild(int childNumber, int pageNumber)
