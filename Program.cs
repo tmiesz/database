@@ -728,7 +728,7 @@ class Table
     {
         var page = Pager.RetrievePage(pageNumber);
 
-        var nodeType = new LeafNode(page).NodeType;
+        var nodeType = Node.GetNodeType(page);
 
         switch (nodeType)
         {
