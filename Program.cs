@@ -431,7 +431,8 @@ static class Constants
     public const int INTERNAL_NODE_CELL_CHILD_SIZE = InternalNodeChildPointerSize;
     public const int INTERNAL_NODE_KEY_OFFSET = INTERNAL_NODE_CELL_CHILD_SIZE;
     public const int INTERNAL_NODE_CELL_SIZE = INTERNAL_NODE_CELL_CHILD_SIZE + KeySize;
-    public const int INTERNAL_NODE_MAX_CELLS = (PAGE_SIZE - INTERNAL_NODE_HEADER_SIZE) / INTERNAL_NODE_CELL_SIZE;
+    public const int INTERNAL_NODE_MAX_CELLS = 3;
+    public const int INTERNAL_NODE_CAPACITY = (PAGE_SIZE - INTERNAL_NODE_HEADER_SIZE) / INTERNAL_NODE_CELL_SIZE;
 
     public const int LEAF_NODE_CELL_COUNT_OFFSET = COMMON_NODE_HEADER_SIZE;
     public const int LEAF_NODE_VALUE_OFFSET = KeySize;
@@ -459,6 +460,7 @@ static class Constants
         Console.WriteLine($"{nameof(INTERNAL_NODE_HEADER_SIZE)}: {INTERNAL_NODE_HEADER_SIZE}");
         Console.WriteLine($"{nameof(INTERNAL_NODE_CELL_SIZE)}: {INTERNAL_NODE_CELL_SIZE}");
         Console.WriteLine($"{nameof(INTERNAL_NODE_MAX_CELLS)}: {INTERNAL_NODE_MAX_CELLS}");
+        Console.WriteLine($"{nameof(INTERNAL_NODE_CAPACITY)}: {INTERNAL_NODE_CAPACITY}");
     }
 }
 
