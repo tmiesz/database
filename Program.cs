@@ -269,6 +269,7 @@ class InternalNode(byte[] page) : Node(page)
         NodeType = NodeType.Internal;
         IsRoot = false;
         NumKeys = 0;
+        RightChild = Constants.INVALID_PAGE_NUMBER;
     }
 
     public uint GetKey(int cell) =>
@@ -416,6 +417,7 @@ static class Constants
     public const int NODE_TYPE_OFFSET = 0;
     public const int IS_ROOT_OFFSET = NODE_TYPE_OFFSET + NodeTypeSize;
     public const int PARENT_POINTER_OFFSET = IS_ROOT_OFFSET + IsRootFlagSize;
+    public const int INVALID_PAGE_NUMBER = -1;
 
     public const int LEAF_NODE_NEXT_LEAF_SIZE = LeafNodeNextLeafSize;
     public const int LEAF_NODE_NEXT_LEAF_OFFSET = LEAF_NODE_CELL_COUNT_OFFSET + CellCountSize;
