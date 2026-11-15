@@ -338,6 +338,16 @@ class InternalNode(byte[] page) : Node(page)
 internal abstract class Node(byte[] page)
 {
     protected byte[] Page { get; } = page;
+    public int Parent
+    {
+        get => BitConverter.ToInt32(Page, Constants.PARENT_POINTER_OFFSET);
+        set
+        {
+            var bytes = BitConverter.GetBytes(value);
+            Array.Copy(bytes, 0, Page, Constants.PARENT_POINTER_OFFSET, bytes.Length);
+        }
+    }
+
     public bool IsRoot
     {
         get => Page[Constants.IS_ROOT_OFFSET] != 0;
@@ -393,6 +403,7 @@ static class Constants
     public const int COMMON_NODE_HEADER_SIZE = NodeTypeSize + IsRootFlagSize + ParentPointerSize;
     public const int NODE_TYPE_OFFSET = 0;
     public const int IS_ROOT_OFFSET = NODE_TYPE_OFFSET + NodeTypeSize;
+    public const int PARENT_POINTER_OFFSET = IS_ROOT_OFFSET + IsRootFlagSize;
 
     public const int LEAF_NODE_NEXT_LEAF_SIZE = LeafNodeNextLeafSize;
     public const int LEAF_NODE_NEXT_LEAF_OFFSET = LEAF_NODE_CELL_COUNT_OFFSET + CellCountSize;
@@ -432,6 +443,7 @@ static class Constants
         Console.WriteLine($"{nameof(INTERNAL_NODE_HEADER_SIZE)}: {INTERNAL_NODE_HEADER_SIZE}");
         Console.WriteLine($"{nameof(INTERNAL_NODE_CELL_SIZE)}: {INTERNAL_NODE_CELL_SIZE}");
         Console.WriteLine($"{nameof(INTERNAL_NODE_MAX_CELLS)}: {INTERNAL_NODE_MAX_CELLS}");
+        Console.WriteLine($"{nameof(PARENT_POINTER_OFFSET)}: {PARENT_POINTER_OFFSET}");
     }
 }
 
