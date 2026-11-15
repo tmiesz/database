@@ -455,7 +455,6 @@ static class Constants
         Console.WriteLine($"{nameof(INTERNAL_NODE_HEADER_SIZE)}: {INTERNAL_NODE_HEADER_SIZE}");
         Console.WriteLine($"{nameof(INTERNAL_NODE_CELL_SIZE)}: {INTERNAL_NODE_CELL_SIZE}");
         Console.WriteLine($"{nameof(INTERNAL_NODE_MAX_CELLS)}: {INTERNAL_NODE_MAX_CELLS}");
-        Console.WriteLine($"{nameof(PARENT_POINTER_OFFSET)}: {PARENT_POINTER_OFFSET}");
     }
 }
 
