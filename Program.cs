@@ -739,13 +739,16 @@ class Table
                 var node = new InternalNode(page);
                 Indent(indentationLevel);
                 Console.WriteLine($"- internal (size {node.NumKeys})");
-                for (int i = 0; i < node.NumKeys; i++)
+                if (node.NumKeys > 0)
                 {
-                    PrintTree(node.GetChild(i), indentationLevel + 1);
-                    Indent(indentationLevel + 1);
-                    Console.WriteLine($"- key {node.GetKey(i)}");
+                    for (int i = 0; i < node.NumKeys; i++)
+                    {
+                        PrintTree(node.GetChild(i), indentationLevel + 1);
+                        Indent(indentationLevel + 1);
+                        Console.WriteLine($"- key {node.GetKey(i)}");
+                    }
+                    PrintTree(node.RightChild, indentationLevel + 1);
                 }
-                PrintTree(node.RightChild, indentationLevel + 1);
                 break;
             case NodeType.Leaf:
                 var leaf = new LeafNode(page);
