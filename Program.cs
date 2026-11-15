@@ -325,6 +325,18 @@ class InternalNode(byte[] page) : Node(page)
         return min;
     }
 
+    public void UpdateKey(uint oldKey, uint newKey)
+    {
+        var childNumber = FindChildNumber(oldKey);
+        if (childNumber != NumKeys)
+            SetKeyForCell(childNumber, newKey);
+    }
+
+    public void CopyCell(int fromCell, int toCell)
+    {
+        Array.Copy(Page, CellStart(fromCell), Page, CellStart(toCell), Constants.INTERNAL_NODE_CELL_SIZE);
+    }
+
     private void ValidateChildNumber(int childNumber)
     {
         if (childNumber > NumKeys)
@@ -668,6 +680,43 @@ class Table
         root.SetChild(0, leftChildPageNumber);
         root.SetKeyForCell(0, leftChild.MaxKey);
         root.RightChild = rightChildPageNumber;
+    }
+
+    public void InternalNodeInsert(int parentPageNumber, int childPageNumber)
+    {
+        var parent = new InternalNode(Pager.RetrievePage(parentPageNumber));
+        var child = new LeafNode(Pager.RetrievePage(childPageNumber));
+
+        var childMaxKey = child.MaxKey;
+        var index = parent.FindChildNumber(childMaxKey);
+        var originalNumKeys = parent.NumKeys;
+
+        if (originalNumKeys >= Constants.INTERNAL_NODE_MAX_CELLS)
+        {
+
+            Console.WriteLine("TODO: Need to implement splitting internal node.");
+            Environment.Exit(1);
+        }
+
+        parent.NumKeys = originalNumKeys + 1;
+        var rightChildPageNumber = parent.RightChild;
+        var rightChild = new LeafNode(Pager.RetrievePage(rightChildPageNumber));
+
+        if (childMaxKey > rightChild.MaxKey)
+        {
+            parent.SetChild((int)originalNumKeys, rightChildPageNumber);
+            parent.SetKeyForCell((int)originalNumKeys, rightChild.MaxKey);
+            parent.RightChild = childPageNumber;
+        }
+        else
+        {
+            for (int i = (int)originalNumKeys; i > index; i--)
+                parent.CopyCell(i - 1, i);
+
+            parent.SetChild(index, childPageNumber);
+            parent.SetKeyForCell(index, childMaxKey);
+        }
+
     }
 
     public void PrintTree(int pageNumber, int indentationLevel)
