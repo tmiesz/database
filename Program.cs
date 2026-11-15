@@ -604,6 +604,7 @@ class Table
     public void SplitAndInsert(Cursor cursor, Row row)
     {
         var oldLeaf = cursor.Leaf;
+        var oldMax = oldLeaf.MaxKey;
         var newPageNumber = Pager.GetUnusedPageNumber();
 
         var page = Pager.RetrievePage(newPageNumber);
@@ -649,8 +650,12 @@ class Table
             CreateNewRoot(newPageNumber);
         else
         {
-            Console.WriteLine("TODO: Need to implement updating parent after split");
-            Environment.Exit(1);
+            var parentPageNumber = oldLeaf.Parent;
+            var newMax = oldLeaf.MaxKey;
+            var parent = new InternalNode(Pager.RetrievePage(parentPageNumber));
+
+            parent.UpdateKey(oldMax, newMax);
+            InternalNodeInsert(parentPageNumber, newPageNumber);
         }
     }
 
