@@ -693,9 +693,8 @@ class Table
     public void InternalNodeInsert(int parentPageNumber, int childPageNumber)
     {
         var parent = new InternalNode(Pager.RetrievePage(parentPageNumber));
-        var child = new LeafNode(Pager.RetrievePage(childPageNumber));
-
-        var childMaxKey = child.MaxKey;
+        var child = Pager.RetrievePage(childPageNumber);
+        var childMaxKey = GetNodeMaxKey(child);
         var index = parent.FindChildNumber(childMaxKey);
         var originalNumKeys = parent.NumKeys;
 
@@ -708,12 +707,13 @@ class Table
 
         parent.NumKeys = originalNumKeys + 1;
         var rightChildPageNumber = parent.RightChild;
-        var rightChild = new LeafNode(Pager.RetrievePage(rightChildPageNumber));
+        var rightChild = Pager.RetrievePage(rightChildPageNumber);
+        var rightChildMaxKey = GetNodeMaxKey(rightChild);
 
-        if (childMaxKey > rightChild.MaxKey)
+        if (childMaxKey > rightChildMaxKey)
         {
             parent.SetChild((int)originalNumKeys, rightChildPageNumber);
-            parent.SetKeyForCell((int)originalNumKeys, rightChild.MaxKey);
+            parent.SetKeyForCell((int)originalNumKeys, rightChildMaxKey);
             parent.RightChild = childPageNumber;
         }
         else
@@ -724,7 +724,16 @@ class Table
             parent.SetChild(index, childPageNumber);
             parent.SetKeyForCell(index, childMaxKey);
         }
+    }
 
+    public uint GetNodeMaxKey(byte[] page)
+    {
+        var nodeType = Node.GetNodeType(page);
+        if (nodeType is NodeType.Leaf)
+            return new LeafNode(page).MaxKey;
+
+        var rightChildPageNumber = new InternalNode(page).RightChild;
+        return GetNodeMaxKey(Pager.RetrievePage(rightChildPageNumber));
     }
 
     public void PrintTree(int pageNumber, int indentationLevel)
