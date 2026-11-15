@@ -353,14 +353,11 @@ class InternalNode(byte[] page) : Node(page)
 internal abstract class Node(byte[] page)
 {
     protected byte[] Page { get; } = page;
+
     public int Parent
     {
         get => BitConverter.ToInt32(Page, Constants.PARENT_POINTER_OFFSET);
-        set
-        {
-            var bytes = BitConverter.GetBytes(value);
-            Array.Copy(bytes, 0, Page, Constants.PARENT_POINTER_OFFSET, bytes.Length);
-        }
+        set => SetParent(Page, value);
     }
 
     public bool IsRoot
@@ -368,13 +365,21 @@ internal abstract class Node(byte[] page)
         get => Page[Constants.IS_ROOT_OFFSET] != 0;
         set => Page[Constants.IS_ROOT_OFFSET] = value ? (byte)1 : (byte)0;
     }
+
     public NodeType NodeType
     {
         get => (NodeType)Page[Constants.NODE_TYPE_OFFSET];
         set => Page[Constants.NODE_TYPE_OFFSET] = (byte)value;
     }
+
     public static NodeType GetNodeType(byte[] page) =>
         (NodeType)page[Constants.NODE_TYPE_OFFSET];
+
+    public static void SetParent(byte[] page, int parentPageNumber)
+    {
+        var bytes = BitConverter.GetBytes(parentPageNumber);
+        Array.Copy(bytes, 0, page, Constants.PARENT_POINTER_OFFSET, bytes.Length);
+    }
 }
 
 enum Kind
