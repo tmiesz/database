@@ -600,6 +600,7 @@ class Table
         newLeaf.Initialize();
         newLeaf.NextLeaf = oldLeaf.NextLeaf;
         oldLeaf.NextLeaf = newPageNumber;
+        newLeaf.Parent = oldLeaf.Parent;
 
         int insertCell = (int)cursor.CellNumber;
 
@@ -648,10 +649,18 @@ class Table
         var leftChildPage = Pager.RetrievePage(leftChildPageNumber);
 
         Array.Copy(rootPage, leftChildPage, Constants.PAGE_SIZE);
+
         var leftChild = new LeafNode(leftChildPage)
         {
-            IsRoot = false
+            IsRoot = false,
+            Parent = RootPageNumber
         };
+
+        var rightChild = new LeafNode(Pager.RetrievePage(rightChildPageNumber))
+        {
+            Parent = RootPageNumber
+        };
+
         var root = new InternalNode(rootPage);
         root.Initialize();
         root.IsRoot = true;
