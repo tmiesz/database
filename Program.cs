@@ -380,6 +380,12 @@ internal abstract class Node(byte[] page)
         var bytes = BitConverter.GetBytes(parentPageNumber);
         Array.Copy(bytes, 0, page, Constants.PARENT_POINTER_OFFSET, bytes.Length);
     }
+
+    public static void SetIsRoot(byte[] page, bool isRoot)
+    {
+        var bytes = BitConverter.GetBytes(isRoot);
+        Array.Copy(bytes, 0, page, Constants.IS_ROOT_OFFSET, bytes.Length);
+    }
 }
 
 enum Kind
@@ -672,28 +678,28 @@ class Table
     public void CreateNewRoot(int rightChildPageNumber)
     {
         var rootPage = Pager.RetrievePage(RootPageNumber);
+
+        var rightChildPage = Pager.RetrievePage(rightChildPageNumber);
+        var rootIsInternal = Node.GetNodeType(rootPage) == NodeType.Internal;
+
+        if (rootIsInternal)
+            new InternalNode(rightChildPage).Initialize();
+
         var leftChildPageNumber = Pager.GetUnusedPageNumber();
         var leftChildPage = Pager.RetrievePage(leftChildPageNumber);
 
         Array.Copy(rootPage, leftChildPage, Constants.PAGE_SIZE);
 
-        var leftChild = new LeafNode(leftChildPage)
-        {
-            IsRoot = false,
-            Parent = RootPageNumber
-        };
-
-        var rightChild = new LeafNode(Pager.RetrievePage(rightChildPageNumber))
-        {
-            Parent = RootPageNumber
-        };
+        Node.SetIsRoot(leftChildPage, false);
+        Node.SetParent(leftChildPage, RootPageNumber);
+        Node.SetParent(rightChildPage, RootPageNumber);
 
         var root = new InternalNode(rootPage);
         root.Initialize();
         root.IsRoot = true;
         root.NumKeys = 1;
         root.SetChild(0, leftChildPageNumber);
-        root.SetKeyForCell(0, leftChild.MaxKey);
+        root.SetKeyForCell(0, GetNodeMaxKey(leftChildPage));
         root.RightChild = rightChildPageNumber;
     }
 
