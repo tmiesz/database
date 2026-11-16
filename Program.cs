@@ -760,8 +760,32 @@ class Table
 
     public void InternalNodeSplitAndInsert(int parentPageNumber, int childPageNumber)
     {
-        Console.WriteLine("TODO: Need to implement splitting internal node.");
-        Environment.Exit(1);
+        var oldPageNumber = parentPageNumber;
+        var oldPage = Pager.RetrievePage(oldPageNumber);
+        var oldNode = new InternalNode(oldPage);
+        var oldMax = GetNodeMaxKey(oldPage);
+
+        var childPage = Pager.RetrievePage(childPageNumber);
+        var childMax = GetNodeMaxKey(childPage);
+
+        var newPageNumber = Pager.GetUnusedPageNumber();
+
+        var splittingRoot = oldNode.IsRoot;
+
+        InternalNode parent;
+
+        if (splittingRoot)
+        {
+            CreateNewRoot(newPageNumber);
+            parent = new InternalNode(Pager.RetrievePage(RootPageNumber));
+            oldPageNumber = parent.GetChild(0);
+            oldNode = new InternalNode(Pager.RetrievePage(oldPageNumber));
+        }
+        else
+        {
+            parent = new InternalNode(Pager.RetrievePage(oldNode.Parent));
+            new InternalNode(Pager.RetrievePage(newPageNumber)).Initialize();
+        }
     }
 
     public uint GetNodeMaxKey(byte[] page)
