@@ -694,7 +694,7 @@ class Table
         {
             var leftNode = new InternalNode(leftChildPage);
 
-            for (int i = 0; i > leftNode.NumKeys; i++)
+            for (int i = 0; i < leftNode.NumKeys; i++)
             {
                 var childPageNumber = leftNode.GetChild(i);
                 Node.SetParent(Pager.RetrievePage(childPageNumber), leftChildPageNumber);
