@@ -690,6 +690,19 @@ class Table
 
         Array.Copy(rootPage, leftChildPage, Constants.PAGE_SIZE);
 
+        if (rootIsInternal)
+        {
+            var leftNode = new InternalNode(leftChildPage);
+
+            for (int i = 0; i > leftNode.NumKeys; i++)
+            {
+                var childPageNumber = leftNode.GetChild(i);
+                Node.SetParent(Pager.RetrievePage(childPageNumber), leftChildPageNumber);
+            }
+
+            Node.SetParent(Pager.RetrievePage(leftNode.RightChild), leftChildPageNumber);
+        }
+
         Node.SetIsRoot(leftChildPage, false);
         Node.SetParent(leftChildPage, RootPageNumber);
         Node.SetParent(rightChildPage, RootPageNumber);
