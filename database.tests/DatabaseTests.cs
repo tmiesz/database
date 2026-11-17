@@ -258,4 +258,52 @@ public class DatabaseTests
 
         Assert.Equal(expected, lines[^40..^1]);
     }
+
+    [Fact]
+    public async Task PrintsSevenLeafTree()
+    {
+        var db = GenerateDatabasePath();
+
+        int[] ids =
+        [
+            58, 56, 8, 54, 77, 7, 25, 71, 13, 22, 53, 51, 59, 32, 36, 79,
+            10, 33, 20, 4, 35, 76, 49, 24, 70, 48, 39, 15, 47, 30, 86, 31,
+            68, 37, 66, 63, 40, 78, 19, 46, 14, 81, 72, 6, 50, 85, 67, 2,
+            55, 69, 5, 65, 52, 1, 29, 9, 43, 75, 21, 82, 12, 18, 60, 44
+        ];
+
+        var (lines, exitCode, error) = await RunScript(
+            db,
+            [.. ids.Select(i => $"insert {i} user{i} person{i}@example.com"),
+            ".btree",
+            ".exit"]);
+
+        Assert.True(exitCode == 0, error);
+
+        static string[] Leaf(string pad, params int[] keys) =>
+            [$"{pad}- leaf (size {keys.Length})", .. keys.Select(k => $"{pad}  - {k}")];
+
+        string[] expected =
+        [
+            "db > Tree:",
+            "- internal (size 1)",
+            "  - internal (size 2)",
+            .. Leaf("    ", 1, 2, 4, 5, 6, 7, 8),
+            "    - key 8",
+            .. Leaf("    ", 9, 10, 12, 13, 14, 15, 18, 19, 20, 21, 22),
+            "    - key 22",
+            .. Leaf("    ", 24, 25, 29, 30, 31, 32, 33, 35),
+            "  - key 35",
+            "  - internal (size 3)",
+            .. Leaf("    ", 36, 37, 39, 40, 43, 44, 46, 47, 48, 49, 50, 51),
+            "    - key 51",
+            .. Leaf("    ", 52, 53, 54, 55, 56, 58, 59, 60, 63, 65, 66),
+            "    - key 66",
+            .. Leaf("    ", 67, 68, 69, 70, 71, 72, 75),
+            "    - key 75",
+            .. Leaf("    ", 76, 77, 78, 79, 81, 82, 85, 86),
+        ];
+
+        Assert.Equal(expected, lines[^82..^1]);
+    }
 }
