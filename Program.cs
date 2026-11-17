@@ -791,6 +791,14 @@ class Table
         InternalNodeInsert(newPageNumber, currentPageNumber);
         Node.SetParent(Pager.RetrievePage(currentPageNumber), newPageNumber);
         oldNode.RightChild = Constants.INVALID_PAGE_NUMBER;
+
+        for (int i = Constants.INTERNAL_NODE_MAX_CELLS - 1; i > Constants.INTERNAL_NODE_MAX_CELLS / 2; i--)
+        {
+            currentPageNumber = oldNode.GetChild(i);
+            InternalNodeInsert(newPageNumber, currentPageNumber);
+            Node.SetParent(Pager.RetrievePage(currentPageNumber), newPageNumber);
+            oldNode.NumKeys--;
+        }
     }
 
     public uint GetNodeMaxKey(byte[] page)
