@@ -799,6 +799,9 @@ class Table
             Node.SetParent(Pager.RetrievePage(currentPageNumber), newPageNumber);
             oldNode.NumKeys--;
         }
+
+        oldNode.RightChild = oldNode.GetChild((int)oldNode.NumKeys - 1);
+        oldNode.NumKeys--;
     }
 
     public uint GetNodeMaxKey(byte[] page)
