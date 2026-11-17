@@ -802,6 +802,12 @@ class Table
 
         oldNode.RightChild = oldNode.GetChild((int)oldNode.NumKeys - 1);
         oldNode.NumKeys--;
+
+        var maxAfterSplit = GetNodeMaxKey(Pager.RetrievePage(oldPageNumber));
+        var destinationPageNumber = childMax < maxAfterSplit ? oldPageNumber : newPageNumber;
+
+        InternalNodeInsert(destinationPageNumber, childPageNumber);
+        Node.SetParent(childPage, destinationPageNumber);
     }
 
     public uint GetNodeMaxKey(byte[] page)
