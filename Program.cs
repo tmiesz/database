@@ -808,6 +808,16 @@ class Table
 
         InternalNodeInsert(destinationPageNumber, childPageNumber);
         Node.SetParent(childPage, destinationPageNumber);
+
+        var newMax = GetNodeMaxKey(Pager.RetrievePage(oldPageNumber));
+        parent.UpdateKey(oldMax, newMax);
+
+        if (!splittingRoot)
+        {
+            var upperPageNumber = oldNode.Parent;
+            Node.SetParent(Pager.RetrievePage(newPageNumber), upperPageNumber);
+            InternalNodeInsert(upperPageNumber, newPageNumber);
+        }
     }
 
     public uint GetNodeMaxKey(byte[] page)
