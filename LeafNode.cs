@@ -9,6 +9,7 @@ class LeafNode(Page page) : Node(page)
         get => BitConverter.ToInt32(Page.Data, Constants.LEAF_NODE_NEXT_LEAF_OFFSET);
         set
         {
+            Page.MarkDirty();
             var bytes = BitConverter.GetBytes(value);
             Array.Copy(bytes, 0, Page.Data, Constants.LEAF_NODE_NEXT_LEAF_OFFSET, bytes.Length);
         }
@@ -19,6 +20,7 @@ class LeafNode(Page page) : Node(page)
         get => BitConverter.ToUInt32(Page.Data, Constants.LEAF_NODE_CELL_COUNT_OFFSET);
         set
         {
+            Page.MarkDirty();
             var bytes = BitConverter.GetBytes(value);
             Array.Copy(bytes, 0, Page.Data, Constants.LEAF_NODE_CELL_COUNT_OFFSET, bytes.Length);
         }
@@ -29,6 +31,7 @@ class LeafNode(Page page) : Node(page)
 
     public void SetKeyForCell(int cell, uint key)
     {
+        Page.MarkDirty();
         var bytes = BitConverter.GetBytes(key);
         Array.Copy(bytes, 0, Page.Data, CellStart(cell), bytes.Length);
     }
@@ -40,6 +43,7 @@ class LeafNode(Page page) : Node(page)
 
     public void StoreRow(Row row, int cell)
     {
+        Page.MarkDirty();
         row.Serialize(Page.Data, RowStart(cell));
     }
 
@@ -66,6 +70,7 @@ class LeafNode(Page page) : Node(page)
 
     public void MakeRoomAt(int cell)
     {
+        Page.MarkDirty();
         for (int i = (int)CellCount - 1; i >= cell; i--)
         {
             Array.Copy(Page.Data, CellStart(i), Page.Data, CellStart(i + 1), Constants.LEAF_NODE_CELL_SIZE);
@@ -82,6 +87,7 @@ class LeafNode(Page page) : Node(page)
 
     public void CopyCellTo(int fromCell, LeafNode destination, int toCell)
     {
+        destination.Page.MarkDirty();
         Array.Copy(Page.Data, CellStart(fromCell), destination.Page.Data, CellStart(toCell), Constants.LEAF_NODE_CELL_SIZE);
     }
 }
