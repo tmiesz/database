@@ -153,7 +153,7 @@ static void PrintPrompt()
     Console.Write("db > ");
 }
 
-class LeafNode(byte[] page) : Node(page)
+class LeafNode(Page page) : Node(page)
 {
     private static int CellStart(int cell) => Constants.LEAF_NODE_HEADER_SIZE + (cell * Constants.LEAF_NODE_CELL_SIZE);
     private static int RowStart(int cell) => CellStart(cell) + Constants.LEAF_NODE_VALUE_OFFSET;
@@ -161,41 +161,41 @@ class LeafNode(byte[] page) : Node(page)
 
     public int NextLeaf
     {
-        get => BitConverter.ToInt32(Page, Constants.LEAF_NODE_NEXT_LEAF_OFFSET);
+        get => BitConverter.ToInt32(Page.Data, Constants.LEAF_NODE_NEXT_LEAF_OFFSET);
         set
         {
             var bytes = BitConverter.GetBytes(value);
-            Array.Copy(bytes, 0, Page, Constants.LEAF_NODE_NEXT_LEAF_OFFSET, bytes.Length);
+            Array.Copy(bytes, 0, Page.Data, Constants.LEAF_NODE_NEXT_LEAF_OFFSET, bytes.Length);
         }
     }
 
     public uint CellCount
     {
-        get => BitConverter.ToUInt32(Page, Constants.LEAF_NODE_CELL_COUNT_OFFSET);
+        get => BitConverter.ToUInt32(Page.Data, Constants.LEAF_NODE_CELL_COUNT_OFFSET);
         set
         {
             var bytes = BitConverter.GetBytes(value);
-            Array.Copy(bytes, 0, Page, Constants.LEAF_NODE_CELL_COUNT_OFFSET, bytes.Length);
+            Array.Copy(bytes, 0, Page.Data, Constants.LEAF_NODE_CELL_COUNT_OFFSET, bytes.Length);
         }
     }
 
     public uint GetKey(int cell) =>
-        BitConverter.ToUInt32(Page, CellStart(cell));
+        BitConverter.ToUInt32(Page.Data, CellStart(cell));
 
     public void SetKeyForCell(int cell, uint key)
     {
         var bytes = BitConverter.GetBytes(key);
-        Array.Copy(bytes, 0, Page, CellStart(cell), bytes.Length);
+        Array.Copy(bytes, 0, Page.Data, CellStart(cell), bytes.Length);
     }
 
     public Row GetRow(int cell)
     {
-        return Row.Deserialize(Page, RowStart(cell));
+        return Row.Deserialize(Page.Data, RowStart(cell));
     }
 
     public void StoreRow(Row row, int cell)
     {
-        row.Serialize(Page, RowStart(cell));
+        row.Serialize(Page.Data, RowStart(cell));
     }
 
     public int FindCell(uint key)
@@ -223,7 +223,7 @@ class LeafNode(byte[] page) : Node(page)
     {
         for (int i = (int)CellCount - 1; i >= cell; i--)
         {
-            Array.Copy(Page, CellStart(i), Page, CellStart(i + 1), Constants.LEAF_NODE_CELL_SIZE);
+            Array.Copy(Page.Data, CellStart(i), Page.Data, CellStart(i + 1), Constants.LEAF_NODE_CELL_SIZE);
         }
     }
 
@@ -237,30 +237,30 @@ class LeafNode(byte[] page) : Node(page)
 
     public void CopyCellTo(int fromCell, LeafNode destination, int toCell)
     {
-        Array.Copy(Page, CellStart(fromCell), destination.Page, CellStart(toCell), Constants.LEAF_NODE_CELL_SIZE);
+        Array.Copy(Page.Data, CellStart(fromCell), destination.Page.Data, CellStart(toCell), Constants.LEAF_NODE_CELL_SIZE);
     }
 }
 
-class InternalNode(byte[] page) : Node(page)
+class InternalNode(Page page) : Node(page)
 {
     private static int CellStart(int cell) => Constants.INTERNAL_NODE_HEADER_SIZE + (cell * Constants.INTERNAL_NODE_CELL_SIZE);
 
     public uint NumKeys
     {
-        get => BitConverter.ToUInt32(Page, Constants.INTERNAL_NODE_NUM_KEYS_OFFSET);
+        get => BitConverter.ToUInt32(Page.Data, Constants.INTERNAL_NODE_NUM_KEYS_OFFSET);
         set
         {
             var bytes = BitConverter.GetBytes(value);
-            Array.Copy(bytes, 0, Page, Constants.INTERNAL_NODE_NUM_KEYS_OFFSET, bytes.Length);
+            Array.Copy(bytes, 0, Page.Data, Constants.INTERNAL_NODE_NUM_KEYS_OFFSET, bytes.Length);
         }
     }
     public int RightChild
     {
-        get => BitConverter.ToInt32(Page, Constants.INTERNAL_NODE_RIGHT_CHILD_OFFSET);
+        get => BitConverter.ToInt32(Page.Data, Constants.INTERNAL_NODE_RIGHT_CHILD_OFFSET);
         set
         {
             var bytes = BitConverter.GetBytes(value);
-            Array.Copy(bytes, 0, Page, Constants.INTERNAL_NODE_RIGHT_CHILD_OFFSET, bytes.Length);
+            Array.Copy(bytes, 0, Page.Data, Constants.INTERNAL_NODE_RIGHT_CHILD_OFFSET, bytes.Length);
         }
     }
 
@@ -273,18 +273,18 @@ class InternalNode(byte[] page) : Node(page)
     }
 
     public uint GetKey(int cell) =>
-        BitConverter.ToUInt32(Page, CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET);
+        BitConverter.ToUInt32(Page.Data, CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET);
 
     public void SetKeyForCell(int cell, uint key)
     {
         var bytes = BitConverter.GetBytes(key);
-        Array.Copy(bytes, 0, Page, CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET, bytes.Length);
+        Array.Copy(bytes, 0, Page.Data, CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET, bytes.Length);
     }
 
     public int GetChild(int childNumber)
     {
         ValidateChildNumber(childNumber);
-        var child = childNumber == NumKeys ? RightChild : BitConverter.ToInt32(Page, CellStart(childNumber));
+        var child = childNumber == NumKeys ? RightChild : BitConverter.ToInt32(Page.Data, CellStart(childNumber));
 
         if (child == Constants.INVALID_PAGE_NUMBER)
         {
@@ -305,7 +305,7 @@ class InternalNode(byte[] page) : Node(page)
         else
         {
             var bytes = BitConverter.GetBytes(pageNumber);
-            Array.Copy(bytes, 0, Page, CellStart(childNumber), bytes.Length);
+            Array.Copy(bytes, 0, Page.Data, CellStart(childNumber), bytes.Length);
         }
     }
 
@@ -337,7 +337,7 @@ class InternalNode(byte[] page) : Node(page)
 
     public void CopyCell(int fromCell, int toCell)
     {
-        Array.Copy(Page, CellStart(fromCell), Page, CellStart(toCell), Constants.INTERNAL_NODE_CELL_SIZE);
+        Array.Copy(Page.Data, CellStart(fromCell), Page.Data, CellStart(toCell), Constants.INTERNAL_NODE_CELL_SIZE);
     }
 
     private void ValidateChildNumber(int childNumber)
@@ -650,7 +650,7 @@ class Table
         var leftChildPageNumber = Pager.GetUnusedPageNumber();
         var leftChildPage = Pager.RetrievePage(leftChildPageNumber);
 
-        Array.Copy(rootPage, leftChildPage, Constants.PAGE_SIZE);
+        Array.Copy(rootPage.Data, leftChildPage.Data, Constants.PAGE_SIZE);
 
         if (rootIsInternal)
         {
@@ -782,7 +782,7 @@ class Table
         }
     }
 
-    public uint GetNodeMaxKey(byte[] page)
+    public uint GetNodeMaxKey(Page page)
     {
         var nodeType = Node.GetNodeType(page);
         if (nodeType is NodeType.Leaf)
