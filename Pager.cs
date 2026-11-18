@@ -2,7 +2,7 @@ internal class Pager
 {
     public string FileName { get; }
     public FileStream FileStream { get; }
-    private byte[][] Pages { get; } = new byte[Constants.MAX_PAGES][];
+    private Page[] Pages { get; } = new Page[Constants.MAX_PAGES];
     public long Length { get; }
     public int PageCount { get; private set; }
 
@@ -23,7 +23,7 @@ internal class Pager
         PageCount = (int)(Length / Constants.PAGE_SIZE);
     }
 
-    public byte[] RetrievePage(int pageNumber)
+    public Page RetrievePage(int pageNumber)
     {
         if (pageNumber >= Constants.MAX_PAGES)
         {
@@ -42,12 +42,12 @@ internal class Pager
 
             _ = FileStream.Read(buffer, 0, Constants.PAGE_SIZE);
 
-            Pages[pageNumber] = buffer;
+            Pages[pageNumber] = new Page(pageNumber, buffer);
 
             if (pageNumber >= PageCount)
                 PageCount = pageNumber + 1;
 
-            return buffer;
+            return Pages[pageNumber];
         }
 
         return Pages[pageNumber];
@@ -71,7 +71,7 @@ internal class Pager
         var offset = pageNumber * Constants.PAGE_SIZE;
         FileStream.Seek(offset, SeekOrigin.Begin);
 
-        FileStream.Write(Pages[pageNumber], 0, Constants.PAGE_SIZE);
+        FileStream.Write(Pages[pageNumber].Data, 0, Constants.PAGE_SIZE);
         FileStream.Flush();
     }
 
