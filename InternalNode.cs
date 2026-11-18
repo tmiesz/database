@@ -7,6 +7,7 @@ class InternalNode(Page page) : Node(page)
         get => BitConverter.ToUInt32(Page.Data, Constants.INTERNAL_NODE_NUM_KEYS_OFFSET);
         set
         {
+            Page.MarkDirty();
             var bytes = BitConverter.GetBytes(value);
             Array.Copy(bytes, 0, Page.Data, Constants.INTERNAL_NODE_NUM_KEYS_OFFSET, bytes.Length);
         }
@@ -16,6 +17,7 @@ class InternalNode(Page page) : Node(page)
         get => BitConverter.ToInt32(Page.Data, Constants.INTERNAL_NODE_RIGHT_CHILD_OFFSET);
         set
         {
+            Page.MarkDirty();
             var bytes = BitConverter.GetBytes(value);
             Array.Copy(bytes, 0, Page.Data, Constants.INTERNAL_NODE_RIGHT_CHILD_OFFSET, bytes.Length);
         }
@@ -34,6 +36,7 @@ class InternalNode(Page page) : Node(page)
 
     public void SetKeyForCell(int cell, uint key)
     {
+        Page.MarkDirty();
         var bytes = BitConverter.GetBytes(key);
         Array.Copy(bytes, 0, Page.Data, CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET, bytes.Length);
     }
@@ -53,6 +56,7 @@ class InternalNode(Page page) : Node(page)
 
     public void SetChild(int childNumber, int pageNumber)
     {
+        Page.MarkDirty();
         ValidateChildNumber(childNumber);
 
         if (childNumber == NumKeys)
@@ -94,6 +98,7 @@ class InternalNode(Page page) : Node(page)
 
     public void CopyCell(int fromCell, int toCell)
     {
+        Page.MarkDirty();
         Array.Copy(Page.Data, CellStart(fromCell), Page.Data, CellStart(toCell), Constants.INTERNAL_NODE_CELL_SIZE);
     }
 
