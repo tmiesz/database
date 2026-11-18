@@ -125,6 +125,12 @@ static void HandleMetaInput(string input, Table table)
             Console.WriteLine("Tree:");
             table.PrintTree(table.RootPageNumber, 0);
             break;
+        case "dirty":
+            var dirtyPages = table.Pager.GetDirtyPages();
+            Console.WriteLine(dirtyPages.Count > 0
+                    ? "Dirty pages: " + string.Join(", ", dirtyPages)
+                    : "Dirty pages: none");
+            break;
         default:
             Console.WriteLine($"Unrecognized command '{input}'.");
             return;

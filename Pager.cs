@@ -79,5 +79,18 @@ internal class Pager
     {
         return PageCount;
     }
+
+    public List<int> GetDirtyPages()
+    {
+        var pages = new List<int>();
+
+        foreach (var page in Pages)
+        {
+            if (page is not null && page.IsDirty)
+                pages.Add(page.PageNumber);
+        }
+
+        return pages;
+    }
 }
 
