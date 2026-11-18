@@ -453,6 +453,7 @@ class Table
         var leftChildPageNumber = Pager.GetUnusedPageNumber();
         var leftChildPage = Pager.RetrievePage(leftChildPageNumber);
 
+        leftChildPage.MarkDirty();
         Array.Copy(rootPage.Data, leftChildPage.Data, Constants.PAGE_SIZE);
 
         if (rootIsInternal)
