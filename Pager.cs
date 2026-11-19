@@ -5,6 +5,7 @@ internal class Pager
     private Page[] Pages { get; } = new Page[Constants.MAX_PAGES];
     public long Length { get; }
     public int PageCount { get; private set; }
+    public bool IsTransactionOpen { get; set; }
 
     public Pager(string fileName)
     {

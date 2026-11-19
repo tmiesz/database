@@ -65,6 +65,32 @@ static void Execute(Statement statement, Table table)
             Console.WriteLine("Executed.");
             break;
 
+        case Kind.BEGIN:
+            if (!table.Pager.IsTransactionOpen)
+            {
+                table.Pager.IsTransactionOpen = true;
+                Console.WriteLine("Executed.");
+            }
+            else Console.WriteLine("Error: Transaction already open.");
+            break;
+
+        case Kind.COMMIT:
+            if (table.Pager.IsTransactionOpen)
+            {
+                table.Pager.IsTransactionOpen = false;
+                Console.WriteLine("Executed.");
+            }
+            else Console.WriteLine("Error: No transaction open.");
+            break;
+
+        case Kind.ROLLBACK:
+            if (table.Pager.IsTransactionOpen)
+            {
+                table.Pager.IsTransactionOpen = false;
+                Console.WriteLine("Executed.");
+            }
+            else Console.WriteLine("Error: No transaction open.");
+            break;
         default:
             Console.WriteLine("Unrecognized command.");
             break;
@@ -102,6 +128,33 @@ static Outcome PrepareInput(string input, out Statement statement)
         }
 
         statement = new(Kind.INSERT, row);
+        return Outcome.Success;
+    }
+
+    if (parts[0].Equals("begin", StringComparison.OrdinalIgnoreCase))
+    {
+        if (parts.Length != 1)
+            return Outcome.SyntaxError;
+
+        statement = new(Kind.BEGIN, null);
+        return Outcome.Success;
+    }
+
+    if (parts[0].Equals("commit", StringComparison.OrdinalIgnoreCase))
+    {
+        if (parts.Length != 1)
+            return Outcome.SyntaxError;
+
+        statement = new(Kind.COMMIT, null);
+        return Outcome.Success;
+    }
+
+    if (parts[0].Equals("rollback", StringComparison.OrdinalIgnoreCase))
+    {
+        if (parts.Length != 1)
+            return Outcome.SyntaxError;
+
+        statement = new(Kind.ROLLBACK, null);
         return Outcome.Success;
     }
 
@@ -162,7 +215,10 @@ static void PrintPrompt()
 enum Kind
 {
     SELECT,
-    INSERT
+    INSERT,
+    BEGIN,
+    COMMIT,
+    ROLLBACK
 }
 
 enum Outcome
@@ -171,7 +227,9 @@ enum Outcome
     SyntaxError,
     UnrecognizedKeyword,
     SizeError,
-    NegativeId
+    NegativeId,
+    AlreadyOpen,
+    NotOpen
 }
 
 enum InsertOutcome
