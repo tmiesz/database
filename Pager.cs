@@ -73,7 +73,6 @@ internal class Pager
         FileStream.Seek(offset, SeekOrigin.Begin);
 
         FileStream.Write(Pages[pageNumber].Data, 0, Constants.PAGE_SIZE);
-        FileStream.Flush();
     }
 
     public int GetUnusedPageNumber()
@@ -108,6 +107,16 @@ internal class Pager
     {
         if (!IsTransactionOpen)
             return TransactionOutcome.NotOpen;
+
+        var pages = GetDirtyPages();
+
+        foreach (var page in pages)
+            Flush(page);
+
+        FileStream.Flush(true);
+
+        foreach (var page in pages)
+            Pages[page].ClearDirty();
 
         IsTransactionOpen = false;
 
