@@ -52,45 +52,45 @@ static void Execute(Statement statement, Table table)
     switch (statement.Kind)
     {
         case Kind.INSERT:
-            var result = table.Insert(statement.Row!);
+            {
+                var result = table.Insert(statement.Row!);
 
-            if (result == InsertOutcome.Duplicate)
-                Console.WriteLine("Error: Duplicate key.");
-            else Console.WriteLine("Executed.");
+                if (result == InsertOutcome.Duplicate)
+                    Console.WriteLine("Error: Duplicate key.");
+                else Console.WriteLine("Executed.");
 
-            break;
-
+                break;
+            }
         case Kind.SELECT:
-            table.Select();
-            Console.WriteLine("Executed.");
-            break;
-
+            {
+                table.Select();
+                Console.WriteLine("Executed.");
+                break;
+            }
         case Kind.BEGIN:
-            if (!table.Pager.IsTransactionOpen)
             {
-                table.Pager.IsTransactionOpen = true;
-                Console.WriteLine("Executed.");
+                var result = table.Pager.Begin();
+                if (result == TransactionOutcome.AlreadyOpen)
+                    Console.WriteLine("Error: Transaction already open.");
+                else Console.WriteLine("Executed.");
+                break;
             }
-            else Console.WriteLine("Error: Transaction already open.");
-            break;
-
         case Kind.COMMIT:
-            if (table.Pager.IsTransactionOpen)
             {
-                table.Pager.IsTransactionOpen = false;
-                Console.WriteLine("Executed.");
+                var result = table.Pager.Commit();
+                if (result == TransactionOutcome.NotOpen)
+                    Console.WriteLine("Error: No transaction open.");
+                else Console.WriteLine("Executed.");
+                break;
             }
-            else Console.WriteLine("Error: No transaction open.");
-            break;
-
         case Kind.ROLLBACK:
-            if (table.Pager.IsTransactionOpen)
             {
-                table.Pager.IsTransactionOpen = false;
-                Console.WriteLine("Executed.");
+                var result = table.Pager.Rollback();
+                if (result == TransactionOutcome.NotOpen)
+                    Console.WriteLine("Error: No transaction open.");
+                else Console.WriteLine("Executed.");
+                break;
             }
-            else Console.WriteLine("Error: No transaction open.");
-            break;
         default:
             Console.WriteLine("Unrecognized command.");
             break;
@@ -227,9 +227,7 @@ enum Outcome
     SyntaxError,
     UnrecognizedKeyword,
     SizeError,
-    NegativeId,
-    AlreadyOpen,
-    NotOpen
+    NegativeId
 }
 
 enum InsertOutcome
@@ -238,6 +236,12 @@ enum InsertOutcome
     Duplicate,
 }
 
+enum TransactionOutcome
+{
+    Success,
+    AlreadyOpen,
+    NotOpen
+}
 enum NodeType : byte
 {
     Internal,

@@ -5,7 +5,7 @@ internal class Pager
     private Page[] Pages { get; } = new Page[Constants.MAX_PAGES];
     public long Length { get; }
     public int PageCount { get; private set; }
-    public bool IsTransactionOpen { get; set; }
+    public bool IsTransactionOpen { get; private set; }
 
     public Pager(string fileName)
     {
@@ -92,6 +92,36 @@ internal class Pager
         }
 
         return pages;
+    }
+
+    public TransactionOutcome Begin()
+    {
+        if (IsTransactionOpen)
+            return TransactionOutcome.AlreadyOpen;
+
+        IsTransactionOpen = true;
+
+        return TransactionOutcome.Success;
+    }
+
+    public TransactionOutcome Commit()
+    {
+        if (!IsTransactionOpen)
+            return TransactionOutcome.NotOpen;
+
+        IsTransactionOpen = false;
+
+        return TransactionOutcome.Success;
+    }
+
+    public TransactionOutcome Rollback()
+    {
+        if (!IsTransactionOpen)
+            return TransactionOutcome.NotOpen;
+
+        IsTransactionOpen = false;
+
+        return TransactionOutcome.Success;
     }
 }
 
