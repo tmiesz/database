@@ -143,6 +143,11 @@ internal class Pager
         return TransactionOutcome.Success;
     }
 
+    public void Close()
+    {
+        FileStream.Dispose();
+    }
+
     private void WritePages()
     {
         var pages = GetDirtyPages();

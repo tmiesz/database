@@ -55,14 +55,7 @@ class Table
 
     public void Close()
     {
-        for (int i = 0; i < Pager.PageCount; i++)
-        {
-            if (!Pager.IsPageLoaded(i))
-                continue;
-            Pager.Flush(i);
-        }
-
-        Pager.FileStream.Dispose();
+        Pager.Close();
     }
 
     public void SplitAndInsert(Cursor cursor, Row row)
