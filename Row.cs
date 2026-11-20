@@ -1,3 +1,5 @@
+using System.Text;
+
 class Row
 {
     const int ID_SIZE = 4;
