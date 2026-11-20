@@ -108,19 +108,19 @@ internal class Pager
         if (!IsTransactionOpen)
             return TransactionOutcome.NotOpen;
 
-        var pages = GetDirtyPages();
-
-        foreach (var page in pages)
-            Flush(page);
-
-        FileStream.Flush(true);
-
-        foreach (var page in pages)
-            Pages[page].ClearDirty();
+        WritePages();
 
         IsTransactionOpen = false;
 
         return TransactionOutcome.Success;
+    }
+
+    public void CompleteStatement()
+    {
+        if (IsTransactionOpen)
+            return;
+
+        WritePages();
     }
 
     public TransactionOutcome Rollback()
@@ -131,6 +131,21 @@ internal class Pager
         IsTransactionOpen = false;
 
         return TransactionOutcome.Success;
+    }
+
+    private void WritePages()
+    {
+        var pages = GetDirtyPages();
+        if (pages.Count == 0)
+            return;
+
+        foreach (var page in pages)
+            Flush(page);
+
+        FileStream.Flush(true);
+
+        foreach (var page in pages)
+            Pages[page].ClearDirty();
     }
 }
 

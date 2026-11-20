@@ -95,6 +95,8 @@ static void Execute(Statement statement, Table table)
             Console.WriteLine("Unrecognized command.");
             break;
     }
+
+    table.Pager.CompleteStatement();
 }
 
 static Outcome PrepareInput(string input, out Statement statement)
@@ -400,6 +402,8 @@ class Table
             root.Initialize();
 
             root.IsRoot = true;
+
+            Pager.CompleteStatement();
         }
     }
 
