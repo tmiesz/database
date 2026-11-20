@@ -2,8 +2,7 @@ internal class Pager
 {
     public string FileName { get; }
     public FileStream FileStream { get; }
-    private Page[] Pages { get; } = new Page[Constants.MAX_PAGES];
-    public long Length { get; }
+    private Page?[] Pages { get; } = new Page?[Constants.MAX_PAGES];
     public int PageCount { get; private set; }
     public bool IsTransactionOpen { get; private set; }
 
@@ -15,14 +14,15 @@ internal class Pager
                 FileMode.OpenOrCreate,
                 FileAccess.ReadWrite
                 );
-        Length = FileStream.Length;
-        if (Length % Constants.PAGE_SIZE != 0)
+        var length = FileStream.Length;
+        if (length % Constants.PAGE_SIZE != 0)
         {
             Console.WriteLine("Db file is not a whole number of pages. Corrupt file.");
             Environment.Exit(1);
         }
-        PageCount = (int)(Length / Constants.PAGE_SIZE);
+        PageCount = (int)(length / Constants.PAGE_SIZE);
     }
+
 
     public Page RetrievePage(int pageNumber)
     {
@@ -33,25 +33,25 @@ internal class Pager
         }
 
         byte[] buffer;
+        var page = Pages[pageNumber];
 
-        if (Pages[pageNumber] is null)
-        {
-            buffer = new byte[Constants.PAGE_SIZE];
+        if (page is not null)
+            return page;
 
-            var offset = pageNumber * Constants.PAGE_SIZE;
-            FileStream.Seek(offset, SeekOrigin.Begin);
+        buffer = new byte[Constants.PAGE_SIZE];
 
-            _ = FileStream.Read(buffer, 0, Constants.PAGE_SIZE);
+        var offset = pageNumber * Constants.PAGE_SIZE;
+        FileStream.Seek(offset, SeekOrigin.Begin);
 
-            Pages[pageNumber] = new Page(pageNumber, buffer);
+        _ = FileStream.Read(buffer, 0, Constants.PAGE_SIZE);
 
-            if (pageNumber >= PageCount)
-                PageCount = pageNumber + 1;
+        page = new Page(pageNumber, buffer);
+        Pages[pageNumber] = page;
 
-            return Pages[pageNumber];
-        }
+        if (pageNumber >= PageCount)
+            PageCount = pageNumber + 1;
 
-        return Pages[pageNumber];
+        return page;
     }
 
     public bool IsPageLoaded(int pageNumber)
@@ -64,15 +64,18 @@ internal class Pager
 
     public void Flush(int pageNumber)
     {
-        if (Pages[pageNumber] is null)
+        var page = Pages[pageNumber];
+
+        if (page is null)
         {
             Console.WriteLine($"Page {pageNumber} is not loaded");
             Environment.Exit(1);
         }
+
         var offset = pageNumber * Constants.PAGE_SIZE;
         FileStream.Seek(offset, SeekOrigin.Begin);
 
-        FileStream.Write(Pages[pageNumber].Data, 0, Constants.PAGE_SIZE);
+        FileStream.Write(page.Data, 0, Constants.PAGE_SIZE);
     }
 
     public int GetUnusedPageNumber()
@@ -128,6 +131,13 @@ internal class Pager
         if (!IsTransactionOpen)
             return TransactionOutcome.NotOpen;
 
+        var pages = GetDirtyPages();
+
+        foreach (var page in pages)
+            Pages[page] = null;
+
+        PageCount = (int)(FileStream.Length / Constants.PAGE_SIZE);
+
         IsTransactionOpen = false;
 
         return TransactionOutcome.Success;
@@ -145,7 +155,7 @@ internal class Pager
         FileStream.Flush(true);
 
         foreach (var page in pages)
-            Pages[page].ClearDirty();
+            Pages[page]!.ClearDirty();
     }
 }
 
