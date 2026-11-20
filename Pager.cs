@@ -54,14 +54,6 @@ internal class Pager
         return page;
     }
 
-    public bool IsPageLoaded(int pageNumber)
-    {
-        if (Pages[pageNumber] != null)
-            return true;
-
-        else return false;
-    }
-
     public void Flush(int pageNumber)
     {
         var page = Pages[pageNumber];
