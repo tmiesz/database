@@ -35,7 +35,7 @@ static class Constants
     public const int JOURNAL_ORIGINAL_PAGE_COUNT_OFFSET = JOURNAL_MAGIC_OFFSET + JournalMagicSize;
     public const int JOURNAL_RECORD_COUNT_OFFSET = JOURNAL_ORIGINAL_PAGE_COUNT_OFFSET + JournalOriginalPageCountSize;
     public const int JOURNAL_PAGE_NUMBER_OFFSET = 0;
-    public const int JOURNAL_PAGE_DATA_OFFSET = LEAF_NODE_VALUE_OFFSET + JournalPageNumberSize;
+    public const int JOURNAL_PAGE_DATA_OFFSET = JOURNAL_PAGE_NUMBER_OFFSET + JournalPageNumberSize;
     public const int JOURNAL_HEADER_SIZE = JournalMagicSize + JournalOriginalPageCountSize + JournalRecordCountSize;
     public const int JOURNAL_RECORD_SIZE = JournalPageNumberSize + PAGE_SIZE;
     public const uint JOURNAL_MAGIC = 0xf0928480;
