@@ -149,7 +149,7 @@ internal class Pager
 
         var originalPageCount = (int)FileStream.Length / Constants.PAGE_SIZE;
         WriteJournal(pages, originalPageCount);
-        CrashPoint.At("after-journal-records");
+        CrashPoint.At("after-journal-header");
 
         for (int i = 0; i < pages.Count; i++)
         {
@@ -174,6 +174,8 @@ internal class Pager
 
         var original = new byte[Constants.PAGE_SIZE];
 
+        var recordCount = 0;
+
         foreach (var pageNumber in pages)
         {
             if (pageNumber >= originalPageCount)
@@ -185,8 +187,25 @@ internal class Pager
             var bytes = BitConverter.GetBytes(pageNumber);
             journal.Write(bytes, 0, bytes.Length);
             journal.Write(original, 0, Constants.PAGE_SIZE);
+
+            recordCount++;
         }
 
+        journal.Flush(true);
+
+        CrashPoint.At("after-journal-records");
+
+        var header = new byte[Constants.JOURNAL_HEADER_SIZE];
+
+        var magicBytes = BitConverter.GetBytes(Constants.JOURNAL_MAGIC);
+        Array.Copy(magicBytes, 0, header, Constants.JOURNAL_MAGIC_OFFSET, magicBytes.Length);
+        var originalPageCountBytes = BitConverter.GetBytes(originalPageCount);
+        Array.Copy(originalPageCountBytes, 0, header, Constants.JOURNAL_ORIGINAL_PAGE_COUNT_OFFSET, originalPageCountBytes.Length);
+        var recordCountBytes = BitConverter.GetBytes(recordCount);
+        Array.Copy(recordCountBytes, 0, header, Constants.JOURNAL_RECORD_COUNT_OFFSET, recordCountBytes.Length);
+
+        journal.Position = 0;
+        journal.Write(header, 0, header.Length);
         journal.Flush(true);
     }
 }
