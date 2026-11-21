@@ -146,8 +146,13 @@ internal class Pager
         if (pages.Count == 0)
             return;
 
-        foreach (var page in pages)
-            Flush(page);
+        for (int i = 0; i < pages.Count; i++)
+        {
+            Flush(pages[i]);
+
+            if (i == 0)
+                CrashPoint.At("after-first-page-write");
+        }
 
         FileStream.Flush(true);
 
