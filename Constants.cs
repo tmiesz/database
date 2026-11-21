@@ -1,14 +1,5 @@
 static class Constants
 {
-    private const int NodeTypeSize = 1;
-    private const int IsRootFlagSize = 1;
-    private const int ParentPointerSize = 4;
-    private const int CellCountSize = 4;
-    private const int KeySize = 4;
-    private const int InternalNodeNumKeysSize = 4;
-    private const int InternalNodeChildPointerSize = 4;
-    private const int LeafNodeNextLeafSize = 4;
-
     public const int COMMON_NODE_HEADER_SIZE = NodeTypeSize + IsRootFlagSize + ParentPointerSize;
     public const int NODE_TYPE_OFFSET = 0;
     public const int IS_ROOT_OFFSET = NODE_TYPE_OFFSET + NodeTypeSize;
@@ -39,6 +30,28 @@ static class Constants
 
     public const int MAX_PAGES = 100;
     public const int PAGE_SIZE = 4096;
+
+    public const int JOURNAL_MAGIC_OFFSET = 0;
+    public const int JOURNAL_ORIGINAL_PAGE_COUNT_OFFSET = JOURNAL_MAGIC_OFFSET + JournalMagicSize;
+    public const int JOURNAL_RECORD_COUNT_OFFSET = JOURNAL_ORIGINAL_PAGE_COUNT_OFFSET + JournalOriginalPageCountSize;
+    public const int JOURNAL_PAGE_NUMBER_OFFSET = 0;
+    public const int JOURNAL_PAGE_DATA_OFFSET = LEAF_NODE_VALUE_OFFSET + JournalPageNumberSize;
+    public const int JOURNAL_HEADER_SIZE = JournalMagicSize + JournalOriginalPageCountSize + JournalRecordCountSize;
+    public const int JOURNAL_RECORD_SIZE = JournalPageNumberSize + PAGE_SIZE;
+    public const uint JOURNAL_MAGIC = 0xf0928480;
+
+    private const int NodeTypeSize = 1;
+    private const int IsRootFlagSize = 1;
+    private const int ParentPointerSize = 4;
+    private const int CellCountSize = 4;
+    private const int KeySize = 4;
+    private const int InternalNodeNumKeysSize = 4;
+    private const int InternalNodeChildPointerSize = 4;
+    private const int LeafNodeNextLeafSize = 4;
+    private const int JournalMagicSize = 4;
+    private const int JournalOriginalPageCountSize = 4;
+    private const int JournalRecordCountSize = 4;
+    private const int JournalPageNumberSize = 4;
 
     internal static void Print()
     {
