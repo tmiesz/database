@@ -1,6 +1,7 @@
 internal class Pager
 {
     public string FileName { get; }
+    private string JournalFileName => $"{FileName}.journal";
     public FileStream FileStream { get; }
     private Page?[] Pages { get; } = new Page?[Constants.MAX_PAGES];
     public int PageCount { get; private set; }
@@ -146,6 +147,10 @@ internal class Pager
         if (pages.Count == 0)
             return;
 
+        var originalPageCount = (int)FileStream.Length / Constants.PAGE_SIZE;
+        WriteJournal(pages, originalPageCount);
+        CrashPoint.At("after-journal-records");
+
         for (int i = 0; i < pages.Count; i++)
         {
             Flush(pages[i]);
@@ -156,8 +161,33 @@ internal class Pager
 
         FileStream.Flush(true);
 
+        File.Delete(JournalFileName);
+
         foreach (var page in pages)
             Pages[page]!.ClearDirty();
+    }
+
+    private void WriteJournal(List<int> pages, int originalPageCount)
+    {
+        using var journal = new FileStream(JournalFileName, FileMode.Create, FileAccess.Write);
+        journal.Position = Constants.JOURNAL_HEADER_SIZE;
+
+        var original = new byte[Constants.PAGE_SIZE];
+
+        foreach (var pageNumber in pages)
+        {
+            if (pageNumber >= originalPageCount)
+                continue;
+
+            FileStream.Seek(pageNumber * Constants.PAGE_SIZE, SeekOrigin.Begin);
+            FileStream.ReadExactly(original, 0, Constants.PAGE_SIZE);
+
+            var bytes = BitConverter.GetBytes(pageNumber);
+            journal.Write(bytes, 0, bytes.Length);
+            journal.Write(original, 0, Constants.PAGE_SIZE);
+        }
+
+        journal.Flush(true);
     }
 }
 
