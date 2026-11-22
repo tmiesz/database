@@ -250,10 +250,23 @@ internal class Pager
                     journal.ReadExactly(record, 0, record.Length);
                     var pageNumber = BitConverter.ToInt32(record, Constants.JOURNAL_PAGE_NUMBER_OFFSET);
 
+                    if (pageNumber < 0 || pageNumber >= originalPageCount)
+                    {
+                        Console.WriteLine("Journal is damaged: a record has an invalid page number. Database not changed.");
+                        Environment.Exit(1);
+                    }
+                }
+
+                journal.Position = Constants.JOURNAL_HEADER_SIZE;
+
+                for (int i = 0; i < recordCount; i++)
+                {
+                    journal.ReadExactly(record, 0, record.Length);
+                    var pageNumber = BitConverter.ToInt32(record, Constants.JOURNAL_PAGE_NUMBER_OFFSET);
+
                     FileStream.Seek(pageNumber * Constants.PAGE_SIZE, SeekOrigin.Begin);
                     FileStream.Write(record, Constants.JOURNAL_PAGE_DATA_OFFSET, Constants.PAGE_SIZE);
                 }
-
                 FileStream.SetLength(originalPageCount * Constants.PAGE_SIZE);
                 FileStream.Flush(true);
                 CrashPoint.At("after-restore");
