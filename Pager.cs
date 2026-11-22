@@ -170,6 +170,7 @@ internal class Pager
     private void WriteJournal(List<int> pages, int originalPageCount)
     {
         using var journal = new FileStream(JournalFileName, FileMode.Create, FileAccess.Write);
+        CrashPoint.At("after-journal-created");
         journal.Position = Constants.JOURNAL_HEADER_SIZE;
 
         var original = new byte[Constants.PAGE_SIZE];
@@ -207,6 +208,28 @@ internal class Pager
         journal.Position = 0;
         journal.Write(header, 0, header.Length);
         journal.Flush(true);
+    }
+
+    private void Recover()
+    {
+        if (!File.Exists(JournalFileName))
+            return;
+
+        using (var journal = new FileStream(JournalFileName, FileMode.Open, FileAccess.Read))
+        {
+            var isValid = false;
+            if (journal.Length >= Constants.JOURNAL_HEADER_SIZE)
+            {
+                var header = new byte[Constants.JOURNAL_HEADER_SIZE];
+                journal.ReadExactly(header, 0, header.Length);
+                isValid = BitConverter.ToUInt32(header, Constants.JOURNAL_MAGIC_OFFSET) == Constants.JOURNAL_MAGIC;
+            }
+
+            if (isValid)
+                return;
+        }
+
+        File.Delete(JournalFileName);
     }
 }
 
