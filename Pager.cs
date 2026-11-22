@@ -233,6 +233,16 @@ internal class Pager
                 var originalPageCount = BitConverter.ToInt32(header, Constants.JOURNAL_ORIGINAL_PAGE_COUNT_OFFSET);
                 var recordCount = BitConverter.ToInt32(header, Constants.JOURNAL_RECORD_COUNT_OFFSET);
 
+                var expectedLength = Constants.JOURNAL_HEADER_SIZE + (long)recordCount * Constants.JOURNAL_RECORD_SIZE;
+                if (recordCount < 0
+                    || originalPageCount < 0
+                    || originalPageCount > Constants.MAX_PAGES
+                    || journal.Length != expectedLength)
+                {
+                    Console.WriteLine("Journal is damaged: its size does not match its header. Database not changed.");
+                    Environment.Exit(1);
+                }
+
                 var record = new byte[Constants.JOURNAL_RECORD_SIZE];
 
                 for (int i = 0; i < recordCount; i++)
