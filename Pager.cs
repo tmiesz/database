@@ -15,6 +15,7 @@ internal class Pager
                 FileMode.OpenOrCreate,
                 FileAccess.ReadWrite
                 );
+        Recover();
         var length = FileStream.Length;
         if (length % Constants.PAGE_SIZE != 0)
         {
@@ -161,6 +162,7 @@ internal class Pager
 
         FileStream.Flush(true);
 
+        CrashPoint.At("after-database-written");
         File.Delete(JournalFileName);
 
         foreach (var page in pages)
@@ -218,15 +220,34 @@ internal class Pager
         using (var journal = new FileStream(JournalFileName, FileMode.Open, FileAccess.Read))
         {
             var isValid = false;
+            var header = new byte[Constants.JOURNAL_HEADER_SIZE];
+
             if (journal.Length >= Constants.JOURNAL_HEADER_SIZE)
             {
-                var header = new byte[Constants.JOURNAL_HEADER_SIZE];
                 journal.ReadExactly(header, 0, header.Length);
                 isValid = BitConverter.ToUInt32(header, Constants.JOURNAL_MAGIC_OFFSET) == Constants.JOURNAL_MAGIC;
             }
 
             if (isValid)
-                return;
+            {
+                var originalPageCount = BitConverter.ToInt32(header, Constants.JOURNAL_ORIGINAL_PAGE_COUNT_OFFSET);
+                var recordCount = BitConverter.ToInt32(header, Constants.JOURNAL_RECORD_COUNT_OFFSET);
+
+                var record = new byte[Constants.JOURNAL_RECORD_SIZE];
+
+                for (int i = 0; i < recordCount; i++)
+                {
+                    journal.ReadExactly(record, 0, record.Length);
+                    var pageNumber = BitConverter.ToInt32(record, Constants.JOURNAL_PAGE_NUMBER_OFFSET);
+
+                    FileStream.Seek(pageNumber * Constants.PAGE_SIZE, SeekOrigin.Begin);
+                    FileStream.Write(record, Constants.JOURNAL_PAGE_DATA_OFFSET, Constants.PAGE_SIZE);
+                }
+
+                FileStream.SetLength(originalPageCount * Constants.PAGE_SIZE);
+                FileStream.Flush(true);
+                CrashPoint.At("after-restore");
+            }
         }
 
         File.Delete(JournalFileName);
