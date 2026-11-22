@@ -2,6 +2,7 @@ internal static class CrashPoint
 {
     private const string VariableName = "DB_CRASH_AT";
 
+    [System.Diagnostics.Conditional("DEBUG")]
     public static void At(string name)
     {
         var envVariable = Environment.GetEnvironmentVariable(VariableName);
