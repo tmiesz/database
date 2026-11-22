@@ -11,7 +11,15 @@ public class DatabaseTests
     private static string GenerateDatabasePath() =>
         Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.db");
 
-    static async Task<(string[] Lines, int ExitCode, string Error)> RunScript(string databasePath, params string[] commands)
+    static Task<(string[] Lines, int ExitCode, string Error)> RunScript(
+        string databasePath,
+        params string[] commands)
+        => RunScriptWithCrash(databasePath, null, commands);
+
+    static async Task<(string[] Lines, int ExitCode, string Error)> RunScriptWithCrash(
+        string databasePath,
+        string? crashAt,
+        params string[] commands)
     {
         var info = new ProcessStartInfo
         {
@@ -21,6 +29,9 @@ public class DatabaseTests
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
+
+        if (crashAt is not null)
+            info.Environment["DB_CRASH_AT"] = crashAt;
 
         using var process = Process.Start(info);
         var errorTask = process!.StandardError.ReadToEndAsync();
@@ -305,5 +316,90 @@ public class DatabaseTests
         ];
 
         Assert.Equal(expected, lines[^82..^1]);
+    }
+
+    [Fact]
+    public async Task RollbackUndoesInsert()
+    {
+        var db = GenerateDatabasePath();
+        var (lines, exitCode, error) = await RunScript(
+            db,
+            "insert 1 user1 person1@example.com",
+            "begin",
+            "insert 2 user2 person2@example.com",
+            "rollback",
+            "select",
+            ".exit");
+
+        Assert.True(exitCode == 0, error);
+
+        string[] expected =
+        [
+            "db > (1, user1, person1@example.com)",
+            "Executed.",
+            "db > ",
+        ];
+
+        Assert.Equal(expected, lines[^3..]);
+    }
+
+    [Fact]
+    public async Task ExitDropsOpenTransaction()
+    {
+        var db = GenerateDatabasePath();
+        var (_, exitCode, error) = await RunScript(
+            db,
+            "insert 1 user1 person1@example.com",
+            "begin",
+            "insert 2 user2 person2@example.com",
+            ".exit");
+
+        Assert.True(exitCode == 0, error);
+
+        var (lines, _, _) = await RunScript(db, "select", ".exit");
+
+        string[] expected =
+        [
+            "db > (1, user1, person1@example.com)",
+            "Executed.",
+            "db > ",
+        ];
+
+        Assert.Equal(expected, lines);
+    }
+
+    [Fact]
+    public async Task CommitCutShortIsRepairedOnNextStart()
+    {
+        var db = GenerateDatabasePath();
+        var journal = db + ".journal";
+
+        var (_, setupExit, setupError) = await RunScript(
+            db,
+            [.. Enumerable.Range(1, 13).Select(i => $"insert {i} user{i} person{i}@example.com"),
+            ".exit"]);
+
+        var (_, crashExit, crashError) = await RunScriptWithCrash(
+            db,
+            "after-database-written",
+            "begin",
+            "insert 14 user14 person14@example.com",
+            "commit");
+
+        Assert.True(File.Exists(journal));
+        Assert.Equal(3 * 4096L, new FileInfo(db).Length);
+
+        var (lines, exitCode, error) = await RunScript(db, "select", ".exit");
+
+        string[] expected =
+        [
+            "db > (1, user1, person1@example.com)",
+            .. Enumerable.Range(2, 12).Select(i => $"({i}, user{i}, person{i}@example.com)"),
+            "Executed.",
+        ];
+
+        Assert.Equal(expected, lines[..^1]);
+        Assert.False(File.Exists(journal));
+        Assert.Equal(4096L, new FileInfo(db).Length);
     }
 }
