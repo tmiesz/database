@@ -1,7 +1,7 @@
 internal class Btree(Pager pager, int rootPageNumber)
 {
     public Pager Pager { get; } = pager;
-    public int RootPageNumber = rootPageNumber;
+    public int RootPageNumber { get; } = rootPageNumber;
 
     public void SplitAndInsert(Cursor cursor, Row row)
     {
