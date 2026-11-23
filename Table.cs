@@ -10,7 +10,7 @@ class Table
         if (Tree.Pager.PageCount == 0)
         {
             var page = Tree.Pager.RetrievePage(RootPageNumber);
-            var root = new LeafNode(page);
+            var root = Tree.GetLeafNode(page);
             root.Initialize();
 
             root.IsRoot = true;

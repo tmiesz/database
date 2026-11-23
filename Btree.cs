@@ -1,6 +1,7 @@
-internal class Btree(Pager pager, int rootPageNumber)
+internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
 {
     public Pager Pager { get; } = pager;
+    public TreeLayout Layout { get; } = layout;
     public int RootPageNumber { get; } = rootPageNumber;
 
     public void SplitAndInsert(Cursor cursor, Row row)
@@ -10,7 +11,7 @@ internal class Btree(Pager pager, int rootPageNumber)
         var newPageNumber = Pager.GetUnusedPageNumber();
 
         var page = Pager.RetrievePage(newPageNumber);
-        var newLeaf = new LeafNode(page);
+        var newLeaf = GetLeafNode(page);
 
         newLeaf.Initialize();
         newLeaf.NextLeaf = oldLeaf.NextLeaf;
@@ -54,7 +55,7 @@ internal class Btree(Pager pager, int rootPageNumber)
         {
             var parentPageNumber = oldLeaf.Parent;
             var newMax = oldLeaf.MaxKey;
-            var parent = new InternalNode(Pager.RetrievePage(parentPageNumber));
+            var parent = GetInternalNode(parentPageNumber);
 
             parent.UpdateKey(oldMax, newMax);
             InternalNodeInsert(parentPageNumber, newPageNumber);
@@ -69,7 +70,7 @@ internal class Btree(Pager pager, int rootPageNumber)
         var rootIsInternal = Node.GetNodeType(rootPage) == NodeType.Internal;
 
         if (rootIsInternal)
-            new InternalNode(rightChildPage).Initialize();
+            GetInternalNode(rightChildPage).Initialize();
 
         var leftChildPageNumber = Pager.GetUnusedPageNumber();
         var leftChildPage = Pager.RetrievePage(leftChildPageNumber);
@@ -79,7 +80,7 @@ internal class Btree(Pager pager, int rootPageNumber)
 
         if (rootIsInternal)
         {
-            var leftNode = new InternalNode(leftChildPage);
+            var leftNode = GetInternalNode(leftChildPage);
 
             for (int i = 0; i < leftNode.NumKeys; i++)
             {
@@ -94,7 +95,7 @@ internal class Btree(Pager pager, int rootPageNumber)
         Node.SetParent(leftChildPage, RootPageNumber);
         Node.SetParent(rightChildPage, RootPageNumber);
 
-        var root = new InternalNode(rootPage);
+        var root = GetInternalNode(rootPage);
         root.Initialize();
         root.IsRoot = true;
         root.NumKeys = 1;
@@ -105,7 +106,7 @@ internal class Btree(Pager pager, int rootPageNumber)
 
     public void InternalNodeInsert(int parentPageNumber, int childPageNumber)
     {
-        var parent = new InternalNode(Pager.RetrievePage(parentPageNumber));
+        var parent = GetInternalNode(Pager.RetrievePage(parentPageNumber));
         var child = Pager.RetrievePage(childPageNumber);
         var childMaxKey = GetNodeMaxKey(child);
         var index = parent.FindChildNumber(childMaxKey);
@@ -149,7 +150,7 @@ internal class Btree(Pager pager, int rootPageNumber)
     {
         var oldPageNumber = parentPageNumber;
         var oldPage = Pager.RetrievePage(oldPageNumber);
-        var oldNode = new InternalNode(oldPage);
+        var oldNode = GetInternalNode(oldPage);
         var oldMax = GetNodeMaxKey(oldPage);
 
         var childPage = Pager.RetrievePage(childPageNumber);
@@ -164,14 +165,14 @@ internal class Btree(Pager pager, int rootPageNumber)
         if (splittingRoot)
         {
             CreateNewRoot(newPageNumber);
-            parent = new InternalNode(Pager.RetrievePage(RootPageNumber));
+            parent = GetInternalNode(Pager.RetrievePage(RootPageNumber));
             oldPageNumber = parent.GetChild(0);
-            oldNode = new InternalNode(Pager.RetrievePage(oldPageNumber));
+            oldNode = GetInternalNode(Pager.RetrievePage(oldPageNumber));
         }
         else
         {
-            parent = new InternalNode(Pager.RetrievePage(oldNode.Parent));
-            new InternalNode(Pager.RetrievePage(newPageNumber)).Initialize();
+            parent = GetInternalNode(Pager.RetrievePage(oldNode.Parent));
+            GetInternalNode(Pager.RetrievePage(newPageNumber)).Initialize();
         }
 
         var currentPageNumber = oldNode.RightChild;
@@ -211,9 +212,9 @@ internal class Btree(Pager pager, int rootPageNumber)
     {
         var nodeType = Node.GetNodeType(page);
         if (nodeType is NodeType.Leaf)
-            return new LeafNode(page).MaxKey;
+            return GetLeafNode(page).MaxKey;
 
-        var rightChildPageNumber = new InternalNode(page).RightChild;
+        var rightChildPageNumber = GetInternalNode(page).RightChild;
         return GetNodeMaxKey(Pager.RetrievePage(rightChildPageNumber));
     }
 
@@ -226,7 +227,7 @@ internal class Btree(Pager pager, int rootPageNumber)
         switch (nodeType)
         {
             case NodeType.Internal:
-                var node = new InternalNode(page);
+                var node = GetInternalNode(page);
                 Indent(indentationLevel);
                 Console.WriteLine($"- internal (size {node.NumKeys})");
                 if (node.NumKeys > 0)
@@ -241,7 +242,7 @@ internal class Btree(Pager pager, int rootPageNumber)
                 }
                 break;
             case NodeType.Leaf:
-                var leaf = new LeafNode(page);
+                var leaf = GetLeafNode(page);
                 Indent(indentationLevel);
                 Console.WriteLine($"- leaf (size {leaf.CellCount})");
                 for (int i = 0; i < leaf.CellCount; i++)
@@ -256,6 +257,18 @@ internal class Btree(Pager pager, int rootPageNumber)
                 break;
         }
     }
+
+    public LeafNode GetLeafNode(Page page) =>
+        new(page, Layout);
+
+    public LeafNode GetLeafNode(int pageNumber) =>
+        GetLeafNode(Pager.RetrievePage(pageNumber));
+
+    public InternalNode GetInternalNode(Page page) =>
+        new(page, Layout);
+
+    public InternalNode GetInternalNode(int pageNumber) =>
+        GetInternalNode(Pager.RetrievePage(pageNumber));
 
     private static void Indent(int level)
     {
