@@ -174,7 +174,7 @@ static void HandleMetaInput(string input, Table table)
             Environment.Exit(0);
             break;
         case "constants":
-            Constants.Print();
+            Constants.Print(table.Tree.Layout);
             break;
         case "btree":
             Console.WriteLine("Tree:");

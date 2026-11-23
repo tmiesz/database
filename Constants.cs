@@ -15,18 +15,11 @@ static class Constants
     public const int INTERNAL_NODE_HEADER_SIZE = COMMON_NODE_HEADER_SIZE + INTERNAL_NODE_NUM_KEYS_SIZE + INTERNAL_NODE_RIGHT_CHILD_SIZE;
     public const int INTERNAL_NODE_CELL_CHILD_SIZE = InternalNodeChildPointerSize;
     public const int INTERNAL_NODE_KEY_OFFSET = INTERNAL_NODE_CELL_CHILD_SIZE;
-    public const int INTERNAL_NODE_CELL_SIZE = INTERNAL_NODE_CELL_CHILD_SIZE + KeySize;
     public const int INTERNAL_NODE_MAX_CELLS = 3;
-    public const int INTERNAL_NODE_CAPACITY = (PAGE_SIZE - INTERNAL_NODE_HEADER_SIZE) / INTERNAL_NODE_CELL_SIZE;
 
     public const int LEAF_NODE_CELL_COUNT_OFFSET = COMMON_NODE_HEADER_SIZE;
-    public const int LEAF_NODE_VALUE_OFFSET = KeySize;
     public const int LEAF_NODE_HEADER_SIZE = COMMON_NODE_HEADER_SIZE + CellCountSize + LEAF_NODE_NEXT_LEAF_SIZE;
-    public const int LEAF_NODE_CELL_SIZE = KeySize + Row.ROW_SIZE;
     public const int LEAF_NODE_SPACE_FOR_CELLS = PAGE_SIZE - LEAF_NODE_HEADER_SIZE;
-    public const int LEAF_NODE_MAX_CELLS = LEAF_NODE_SPACE_FOR_CELLS / LEAF_NODE_CELL_SIZE;
-    public const int LEAF_NODE_RIGHT_SPLIT_COUNT = (LEAF_NODE_MAX_CELLS + 1) / 2;
-    public const int LEAF_NODE_LEFT_SPLIT_COUNT = LEAF_NODE_MAX_CELLS + 1 - LEAF_NODE_RIGHT_SPLIT_COUNT;
 
     public const int MAX_PAGES = 100;
     public const int PAGE_SIZE = 4096;
@@ -44,7 +37,6 @@ static class Constants
     private const int IsRootFlagSize = 1;
     private const int ParentPointerSize = 4;
     private const int CellCountSize = 4;
-    private const int KeySize = 4;
     private const int InternalNodeNumKeysSize = 4;
     private const int InternalNodeChildPointerSize = 4;
     private const int LeafNodeNextLeafSize = 4;
@@ -53,20 +45,20 @@ static class Constants
     private const int JournalRecordCountSize = 4;
     private const int JournalPageNumberSize = 4;
 
-    internal static void Print()
+    internal static void Print(TreeLayout layout)
     {
         Console.WriteLine("Constants:");
         Console.WriteLine($"{nameof(Row.ROW_SIZE)}: {Row.ROW_SIZE}");
         Console.WriteLine($"{nameof(COMMON_NODE_HEADER_SIZE)}: {COMMON_NODE_HEADER_SIZE}");
         Console.WriteLine($"{nameof(LEAF_NODE_HEADER_SIZE)}: {LEAF_NODE_HEADER_SIZE}");
-        Console.WriteLine($"{nameof(LEAF_NODE_CELL_SIZE)}: {LEAF_NODE_CELL_SIZE}");
+        Console.WriteLine($"LEAF_NODE_CELL_SIZE: {layout.LeafCellSize}");
         Console.WriteLine($"{nameof(LEAF_NODE_SPACE_FOR_CELLS)}: {LEAF_NODE_SPACE_FOR_CELLS}");
-        Console.WriteLine($"{nameof(LEAF_NODE_MAX_CELLS)}: {LEAF_NODE_MAX_CELLS}");
-        Console.WriteLine($"{nameof(LEAF_NODE_RIGHT_SPLIT_COUNT)}: {LEAF_NODE_RIGHT_SPLIT_COUNT}");
-        Console.WriteLine($"{nameof(LEAF_NODE_LEFT_SPLIT_COUNT)}: {LEAF_NODE_LEFT_SPLIT_COUNT}");
-        Console.WriteLine($"{nameof(INTERNAL_NODE_HEADER_SIZE)}: {INTERNAL_NODE_HEADER_SIZE}");
-        Console.WriteLine($"{nameof(INTERNAL_NODE_CELL_SIZE)}: {INTERNAL_NODE_CELL_SIZE}");
+        Console.WriteLine($"LEAF_NODE_MAX_CELLS: {layout.LeafMaxCells}");
+        Console.WriteLine($"LEAF_NODE_RIGHT_SPLIT_COUNT: {layout.LeafRightSplitCount}");
+        Console.WriteLine($"LEAF_NODE_LEFT_SPLIT_COUNT): {layout.LeafLeftSplitCount}");
+        Console.WriteLine($"INTERNAL_NODE_HEADER_SIZE): {INTERNAL_NODE_HEADER_SIZE}");
+        Console.WriteLine($"INTERNAL_NODE_CELL_SIZE): {layout.InternalCellSize}");
         Console.WriteLine($"{nameof(INTERNAL_NODE_MAX_CELLS)}: {INTERNAL_NODE_MAX_CELLS}");
-        Console.WriteLine($"{nameof(INTERNAL_NODE_CAPACITY)}: {INTERNAL_NODE_CAPACITY}");
+        Console.WriteLine($"INTERNAL_NODE_CAPACITY): {layout.InternalCapacity}");
     }
 }
