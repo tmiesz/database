@@ -22,14 +22,14 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
 
         LeafNode destination;
         int cellInDestination;
-        for (int i = Constants.LEAF_NODE_MAX_CELLS; i >= 0; i--)
+        for (int i = Layout.LeafMaxCells; i >= 0; i--)
         {
 
-            if (i >= Constants.LEAF_NODE_LEFT_SPLIT_COUNT)
+            if (i >= Layout.LeafLeftSplitCount)
                 destination = newLeaf;
             else destination = oldLeaf;
 
-            cellInDestination = i % Constants.LEAF_NODE_LEFT_SPLIT_COUNT;
+            cellInDestination = i % Layout.LeafLeftSplitCount;
 
             if (i == insertCell)
             {
@@ -46,8 +46,8 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
             }
         }
 
-        oldLeaf.CellCount = Constants.LEAF_NODE_LEFT_SPLIT_COUNT;
-        newLeaf.CellCount = Constants.LEAF_NODE_RIGHT_SPLIT_COUNT;
+        oldLeaf.CellCount = (uint)Layout.LeafLeftSplitCount;
+        newLeaf.CellCount = (uint)Layout.LeafRightSplitCount;
 
         if (oldLeaf.IsRoot)
             CreateNewRoot(newPageNumber);
@@ -112,7 +112,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         var index = parent.FindChildNumber(childMaxKey);
         var originalNumKeys = parent.NumKeys;
 
-        if (originalNumKeys >= Constants.INTERNAL_NODE_MAX_CELLS)
+        if (originalNumKeys >= Layout.InternalMaxCells)
         {
             InternalNodeSplitAndInsert(parentPageNumber, childPageNumber);
             return;
@@ -180,7 +180,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         Node.SetParent(Pager.RetrievePage(currentPageNumber), newPageNumber);
         oldNode.RightChild = Constants.INVALID_PAGE_NUMBER;
 
-        for (int i = Constants.INTERNAL_NODE_MAX_CELLS - 1; i > Constants.INTERNAL_NODE_MAX_CELLS / 2; i--)
+        for (int i = Layout.InternalMaxCells - 1; i > Layout.InternalMaxCells / 2; i--)
         {
             currentPageNumber = oldNode.GetChild(i);
             InternalNodeInsert(newPageNumber, currentPageNumber);

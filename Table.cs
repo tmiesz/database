@@ -28,7 +28,7 @@ class Table
         if (cellNumber < leaf.CellCount && leaf.GetKey((int)cellNumber) == row.Id)
             return InsertOutcome.Duplicate;
 
-        if (leaf.CellCount >= Constants.LEAF_NODE_MAX_CELLS)
+        if (leaf.CellCount >= Tree.Layout.LeafMaxCells)
         {
             Tree.SplitAndInsert(cursor, row);
             return InsertOutcome.Success;
