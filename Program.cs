@@ -5,7 +5,8 @@
 }
 
 var pager = new Pager(args[0]);
-var table = new Table(pager);
+var tree = new Btree(pager, 0);
+var table = new Table(tree);
 
 while (true)
 {
@@ -42,10 +43,10 @@ void HandleInput(string input)
 
     }
 
-    Execute(statement, table);
+    Execute(statement, table, pager);
 }
 
-static void Execute(Statement statement, Table table)
+static void Execute(Statement statement, Table table, Pager pager)
 {
     switch (statement.Kind)
     {
@@ -67,7 +68,7 @@ static void Execute(Statement statement, Table table)
             }
         case Kind.BEGIN:
             {
-                var result = table.Pager.Begin();
+                var result = pager.Begin();
                 if (result == TransactionOutcome.AlreadyOpen)
                     Console.WriteLine("Error: Transaction already open.");
                 else Console.WriteLine("Executed.");
@@ -75,7 +76,7 @@ static void Execute(Statement statement, Table table)
             }
         case Kind.COMMIT:
             {
-                var result = table.Pager.Commit();
+                var result = pager.Commit();
                 if (result == TransactionOutcome.NotOpen)
                     Console.WriteLine("Error: No transaction open.");
                 else Console.WriteLine("Executed.");
@@ -83,7 +84,7 @@ static void Execute(Statement statement, Table table)
             }
         case Kind.ROLLBACK:
             {
-                var result = table.Pager.Rollback();
+                var result = pager.Rollback();
                 if (result == TransactionOutcome.NotOpen)
                     Console.WriteLine("Error: No transaction open.");
                 else Console.WriteLine("Executed.");
@@ -94,7 +95,7 @@ static void Execute(Statement statement, Table table)
             break;
     }
 
-    table.Pager.CompleteStatement();
+    pager.CompleteStatement();
 }
 
 static Outcome PrepareInput(string input, out Statement statement)
@@ -176,10 +177,10 @@ static void HandleMetaInput(string input, Table table)
             break;
         case "btree":
             Console.WriteLine("Tree:");
-            table.PrintTree(table.RootPageNumber, 0);
+            table.Tree.PrintTree(table.RootPageNumber, 0);
             break;
         case "dirty":
-            var dirtyPages = table.Pager.GetDirtyPages();
+            var dirtyPages = table.Tree.Pager.GetDirtyPages();
             Console.WriteLine(dirtyPages.Count > 0
                     ? "Dirty pages: " + string.Join(", ", dirtyPages)
                     : "Dirty pages: none");

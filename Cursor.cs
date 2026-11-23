@@ -1,7 +1,7 @@
 class Cursor(Table table, int pageNumber, uint initialCellNumber)
 {
     public Table Table { get; } = table;
-    public LeafNode Leaf { get; private set; } = new(table.Pager.RetrievePage(pageNumber));
+    public LeafNode Leaf { get; private set; } = new(table.Tree.Pager.RetrievePage(pageNumber));
     public uint CellNumber { get; private set; } = initialCellNumber;
     public int PageNumber { get; private set; } = pageNumber;
     public bool EndOfTable => CellNumber >= Leaf.CellCount;
@@ -29,7 +29,7 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
             if (nextPageNumber != 0)
             {
                 PageNumber = nextPageNumber;
-                Leaf = new LeafNode(Table.Pager.RetrievePage(PageNumber));
+                Leaf = new LeafNode(Table.Tree.Pager.RetrievePage(PageNumber));
                 CellNumber = 0;
             }
         }
@@ -37,7 +37,7 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
 
     private static Cursor FindInPage(Table table, int pageNumber, uint key)
     {
-        var page = table.Pager.RetrievePage(pageNumber);
+        var page = table.Tree.Pager.RetrievePage(pageNumber);
         var type = Node.GetNodeType(page);
 
         switch (type)
