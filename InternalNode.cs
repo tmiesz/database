@@ -1,6 +1,6 @@
-class InternalNode(Page page) : Node(page)
+class InternalNode(Page page, TreeLayout layout) : Node(page)
 {
-    private static int CellStart(int cell) => Constants.INTERNAL_NODE_HEADER_SIZE + (cell * Constants.INTERNAL_NODE_CELL_SIZE);
+    private int CellStart(int cell) => Constants.INTERNAL_NODE_HEADER_SIZE + (cell * Layout.InternalCellSize);
 
     public uint NumKeys
     {
@@ -22,6 +22,8 @@ class InternalNode(Page page) : Node(page)
             Array.Copy(bytes, 0, Page.Data, Constants.INTERNAL_NODE_RIGHT_CHILD_OFFSET, bytes.Length);
         }
     }
+
+    private TreeLayout Layout { get; } = layout;
 
     public void Initialize()
     {
@@ -99,7 +101,7 @@ class InternalNode(Page page) : Node(page)
     public void CopyCell(int fromCell, int toCell)
     {
         Page.MarkDirty();
-        Array.Copy(Page.Data, CellStart(fromCell), Page.Data, CellStart(toCell), Constants.INTERNAL_NODE_CELL_SIZE);
+        Array.Copy(Page.Data, CellStart(fromCell), Page.Data, CellStart(toCell), Layout.InternalCellSize);
     }
 
     private void ValidateChildNumber(int childNumber)

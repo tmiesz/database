@@ -1,7 +1,7 @@
-class LeafNode(Page page) : Node(page)
+class LeafNode(Page page, TreeLayout layout) : Node(page)
 {
-    private static int CellStart(int cell) => Constants.LEAF_NODE_HEADER_SIZE + (cell * Constants.LEAF_NODE_CELL_SIZE);
-    private static int RowStart(int cell) => CellStart(cell) + Constants.LEAF_NODE_VALUE_OFFSET;
+    private int CellStart(int cell) => Constants.LEAF_NODE_HEADER_SIZE + (cell * Layout.LeafCellSize);
+    private int RowStart(int cell) => CellStart(cell) + Layout.LeafValueOffset;
     public uint MaxKey => GetKey((int)CellCount - 1);
 
     public int NextLeaf
@@ -25,6 +25,8 @@ class LeafNode(Page page) : Node(page)
             Array.Copy(bytes, 0, Page.Data, Constants.LEAF_NODE_CELL_COUNT_OFFSET, bytes.Length);
         }
     }
+
+    private TreeLayout Layout { get; } = layout;
 
     public uint GetKey(int cell) =>
         BitConverter.ToUInt32(Page.Data, CellStart(cell));
@@ -73,7 +75,7 @@ class LeafNode(Page page) : Node(page)
         Page.MarkDirty();
         for (int i = (int)CellCount - 1; i >= cell; i--)
         {
-            Array.Copy(Page.Data, CellStart(i), Page.Data, CellStart(i + 1), Constants.LEAF_NODE_CELL_SIZE);
+            Array.Copy(Page.Data, CellStart(i), Page.Data, CellStart(i + 1), Layout.LeafCellSize);
         }
     }
 
