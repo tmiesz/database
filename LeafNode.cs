@@ -90,7 +90,7 @@ class LeafNode(Page page, TreeLayout layout) : Node(page)
     public void CopyCellTo(int fromCell, LeafNode destination, int toCell)
     {
         destination.Page.MarkDirty();
-        Array.Copy(Page.Data, CellStart(fromCell), destination.Page.Data, CellStart(toCell), Constants.LEAF_NODE_CELL_SIZE);
+        Array.Copy(Page.Data, CellStart(fromCell), destination.Page.Data, CellStart(toCell), Layout.LeafCellSize);
     }
 }
 
