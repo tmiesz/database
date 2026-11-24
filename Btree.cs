@@ -22,6 +22,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
 
         LeafNode destination;
         int cellInDestination;
+        var key = TableKey.FromId(row.Id);
         for (int i = Layout.LeafMaxCells; i >= 0; i--)
         {
 
@@ -33,7 +34,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
 
             if (i == insertCell)
             {
-                destination.SetKeyForCell(cellInDestination, row.Id);
+                destination.SetKeyForCell(cellInDestination, key);
                 destination.StoreRow(row, cellInDestination);
             }
             else if (i > insertCell)
@@ -130,7 +131,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         var rightChild = Pager.RetrievePage(rightChildPageNumber);
         var rightChildMaxKey = GetNodeMaxKey(rightChild);
 
-        if (childMaxKey > rightChildMaxKey)
+        if (childMaxKey.AsSpan().SequenceCompareTo(rightChildMaxKey) > 0)
         {
             parent.SetChild((int)originalNumKeys, rightChildPageNumber);
             parent.SetKeyForCell((int)originalNumKeys, rightChildMaxKey);
@@ -192,7 +193,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         oldNode.NumKeys--;
 
         var maxAfterSplit = GetNodeMaxKey(Pager.RetrievePage(oldPageNumber));
-        var destinationPageNumber = childMax < maxAfterSplit ? oldPageNumber : newPageNumber;
+        var destinationPageNumber = childMax.AsSpan().SequenceCompareTo(maxAfterSplit) < 0 ? oldPageNumber : newPageNumber;
 
         InternalNodeInsert(destinationPageNumber, childPageNumber);
         Node.SetParent(childPage, destinationPageNumber);
@@ -208,7 +209,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         }
     }
 
-    public uint GetNodeMaxKey(Page page)
+    public byte[] GetNodeMaxKey(Page page)
     {
         var nodeType = Node.GetNodeType(page);
         if (nodeType is NodeType.Leaf)
@@ -236,7 +237,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
                     {
                         PrintTree(node.GetChild(i), indentationLevel + 1);
                         Indent(indentationLevel + 1);
-                        Console.WriteLine($"- key {node.GetKey(i)}");
+                        Console.WriteLine($"- key {TableKey.ToId(node.GetKey(i))}");
                     }
                     PrintTree(node.RightChild, indentationLevel + 1);
                 }
@@ -248,7 +249,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
                 for (int i = 0; i < leaf.CellCount; i++)
                 {
                     Indent(indentationLevel + 1);
-                    Console.WriteLine($"- {leaf.GetKey(i)}");
+                    Console.WriteLine($"- {TableKey.ToId(leaf.GetKey(i))}");
                 }
                 break;
             default:
