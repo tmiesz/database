@@ -34,7 +34,7 @@ class InternalNode(Page page, TreeLayout layout) : Node(page)
     }
 
     public ReadOnlySpan<byte> GetKey(int cell) =>
-        Page.Data.AsSpan(CellStart(cell), Layout.KeySize);
+        Page.Data.AsSpan(CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET, Layout.KeySize);
 
     public void SetKeyForCell(int cell, ReadOnlySpan<byte> key)
     {
@@ -42,7 +42,7 @@ class InternalNode(Page page, TreeLayout layout) : Node(page)
             throw new ArgumentException("Key length does not match the layout.", nameof(key));
 
         Page.MarkDirty();
-        key.CopyTo(Page.Data.AsSpan(CellStart(cell), Layout.KeySize));
+        key.CopyTo(Page.Data.AsSpan(CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET, Layout.KeySize));
     }
 
     public int GetChild(int childNumber)
