@@ -2,7 +2,7 @@ class LeafNode(Page page, TreeLayout layout) : Node(page)
 {
     private int CellStart(int cell) => Constants.LEAF_NODE_HEADER_SIZE + (cell * Layout.LeafCellSize);
     private int RowStart(int cell) => CellStart(cell) + Layout.LeafValueOffset;
-    public uint MaxKey => GetKey((int)CellCount - 1);
+    public byte[] MaxKey => GetKey((int)CellCount - 1).ToArray();
 
     public int NextLeaf
     {
@@ -28,14 +28,16 @@ class LeafNode(Page page, TreeLayout layout) : Node(page)
 
     private TreeLayout Layout { get; } = layout;
 
-    public uint GetKey(int cell) =>
-        BitConverter.ToUInt32(Page.Data, CellStart(cell));
+    public ReadOnlySpan<byte> GetKey(int cell) =>
+        Page.Data.AsSpan(CellStart(cell), Layout.KeySize);
 
-    public void SetKeyForCell(int cell, uint key)
+    public void SetKeyForCell(int cell, ReadOnlySpan<byte> key)
     {
+        if (key.Length != Layout.KeySize)
+            throw new ArgumentException("Key length does not match the layout.", nameof(key));
+
         Page.MarkDirty();
-        var bytes = BitConverter.GetBytes(key);
-        Array.Copy(bytes, 0, Page.Data, CellStart(cell), bytes.Length);
+        key.CopyTo(Page.Data.AsSpan(CellStart(cell), Layout.KeySize));
     }
 
     public Row GetRow(int cell)
@@ -49,7 +51,7 @@ class LeafNode(Page page, TreeLayout layout) : Node(page)
         row.Serialize(Page.Data, RowStart(cell));
     }
 
-    public int FindCell(uint key)
+    public int FindCell(ReadOnlySpan<byte> key)
     {
         var min = 0;
         var onePastMax = (int)CellCount;
@@ -57,14 +59,11 @@ class LeafNode(Page page, TreeLayout layout) : Node(page)
         while (min != onePastMax)
         {
             var middle = (min + onePastMax) / 2;
-            var keyAtMiddle = GetKey(middle);
+            var comparison = key.SequenceCompareTo(GetKey(middle));
 
-            if (key == keyAtMiddle)
-                return middle;
-            if (key < keyAtMiddle)
-                onePastMax = middle;
-            else
-                min = middle + 1;
+            if (comparison == 0) return middle;
+            if (comparison < 0) onePastMax = middle;
+            else min = middle + 1;
         }
 
         return min;

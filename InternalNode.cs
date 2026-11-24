@@ -33,14 +33,16 @@ class InternalNode(Page page, TreeLayout layout) : Node(page)
         RightChild = Constants.INVALID_PAGE_NUMBER;
     }
 
-    public uint GetKey(int cell) =>
-        BitConverter.ToUInt32(Page.Data, CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET);
+    public ReadOnlySpan<byte> GetKey(int cell) =>
+        Page.Data.AsSpan(CellStart(cell), Layout.KeySize);
 
-    public void SetKeyForCell(int cell, uint key)
+    public void SetKeyForCell(int cell, ReadOnlySpan<byte> key)
     {
+        if (key.Length != Layout.KeySize)
+            throw new ArgumentException("Key length does not match the layout.", nameof(key));
+
         Page.MarkDirty();
-        var bytes = BitConverter.GetBytes(key);
-        Array.Copy(bytes, 0, Page.Data, CellStart(cell) + Constants.INTERNAL_NODE_KEY_OFFSET, bytes.Length);
+        key.CopyTo(Page.Data.AsSpan(CellStart(cell), Layout.KeySize));
     }
 
     public int GetChild(int childNumber)
@@ -72,7 +74,7 @@ class InternalNode(Page page, TreeLayout layout) : Node(page)
         }
     }
 
-    public int FindChildNumber(uint key)
+    public int FindChildNumber(ReadOnlySpan<byte> key)
     {
         var min = 0;
         var onePastMax = (int)NumKeys;
@@ -80,18 +82,16 @@ class InternalNode(Page page, TreeLayout layout) : Node(page)
         while (min != onePastMax)
         {
             var middle = (min + onePastMax) / 2;
-            var keyToRight = GetKey(middle);
 
-            if (keyToRight >= key)
+            if (GetKey(middle).SequenceCompareTo(key) >= 0)
                 onePastMax = middle;
-            else
-                min = middle + 1;
+            else min = middle + 1;
         }
 
         return min;
     }
 
-    public void UpdateKey(uint oldKey, uint newKey)
+    public void UpdateKey(ReadOnlySpan<byte> oldKey, ReadOnlySpan<byte> newKey)
     {
         var childNumber = FindChildNumber(oldKey);
         if (childNumber != NumKeys)
