@@ -5,7 +5,7 @@
 }
 
 var pager = new Pager(args[0]);
-var layout = new TreeLayout(sizeof(uint), Row.ROW_SIZE, Constants.INTERNAL_NODE_MAX_CELLS);
+var layout = new TreeLayout(TableKey.SIZE, Row.ROW_SIZE, Constants.INTERNAL_NODE_MAX_CELLS);
 var tree = new Btree(pager, layout, 0);
 var table = new Table(tree);
 
