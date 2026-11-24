@@ -21,11 +21,12 @@ class Table
 
     public InsertOutcome Insert(Row row)
     {
-        var cursor = Cursor.CreateAtKey(this, row.Id);
+        var key = TableKey.FromId(row.Id);
+        var cursor = Cursor.CreateAtKey(this, key);
         var leaf = cursor.Leaf;
 
         var cellNumber = cursor.CellNumber;
-        if (cellNumber < leaf.CellCount && leaf.GetKey((int)cellNumber) == row.Id)
+        if (cellNumber < leaf.CellCount && leaf.GetKey((int)cellNumber).SequenceEqual(key))
             return InsertOutcome.Duplicate;
 
         if (leaf.CellCount >= Tree.Layout.LeafMaxCells)
@@ -35,7 +36,7 @@ class Table
         }
 
         leaf.MakeRoomAt((int)cellNumber);
-        leaf.SetKeyForCell((int)cellNumber, row.Id);
+        leaf.SetKeyForCell((int)cellNumber, key);
         leaf.StoreRow(row, (int)cellNumber);
 
         leaf.CellCount++;

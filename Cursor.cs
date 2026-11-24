@@ -8,10 +8,10 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
 
     public static Cursor CreateAtStart(Table table)
     {
-        return FindInPage(table, table.RootPageNumber, 0);
+        return FindInPage(table, table.RootPageNumber, new byte[table.Tree.Layout.KeySize]);
     }
 
-    public static Cursor CreateAtKey(Table table, uint key)
+    public static Cursor CreateAtKey(Table table, ReadOnlySpan<byte> key)
     {
         return FindInPage(table, table.RootPageNumber, key);
     }
@@ -35,7 +35,7 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
         }
     }
 
-    private static Cursor FindInPage(Table table, int pageNumber, uint key)
+    private static Cursor FindInPage(Table table, int pageNumber, ReadOnlySpan<byte> key)
     {
         var page = table.Tree.Pager.RetrievePage(pageNumber);
         var type = Node.GetNodeType(page);
