@@ -1,19 +1,19 @@
-class Cursor(Table table, int pageNumber, uint initialCellNumber)
+class Cursor(Btree tree, int pageNumber, uint initialCellNumber)
 {
-    public Table Table { get; } = table;
-    public LeafNode Leaf { get; private set; } = table.Tree.GetLeafNode(pageNumber);
+    public Btree Tree { get; } = tree;
+    public LeafNode Leaf { get; private set; } = tree.GetLeafNode(pageNumber);
     public uint CellNumber { get; private set; } = initialCellNumber;
     public int PageNumber { get; private set; } = pageNumber;
     public bool EndOfTable => CellNumber >= Leaf.CellCount;
 
-    public static Cursor CreateAtStart(Table table)
+    public static Cursor CreateAtStart(Btree tree)
     {
-        return FindInPage(table, table.RootPageNumber, new byte[table.Tree.Layout.KeySize]);
+        return FindInPage(tree, tree.RootPageNumber, new byte[tree.Layout.KeySize]);
     }
 
-    public static Cursor CreateAtKey(Table table, ReadOnlySpan<byte> key)
+    public static Cursor CreateAtKey(Btree tree, ReadOnlySpan<byte> key)
     {
-        return FindInPage(table, table.RootPageNumber, key);
+        return FindInPage(tree, tree.RootPageNumber, key);
     }
 
     public ReadOnlySpan<byte> GetValue() => Leaf.GetValue((int)CellNumber);
@@ -29,28 +29,28 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
             if (nextPageNumber != 0)
             {
                 PageNumber = nextPageNumber;
-                Leaf = Table.Tree.GetLeafNode(PageNumber);
+                Leaf = Tree.GetLeafNode(PageNumber);
                 CellNumber = 0;
             }
         }
     }
 
-    private static Cursor FindInPage(Table table, int pageNumber, ReadOnlySpan<byte> key)
+    private static Cursor FindInPage(Btree tree, int pageNumber, ReadOnlySpan<byte> key)
     {
-        var page = table.Tree.Pager.RetrievePage(pageNumber);
+        var page = tree.Pager.RetrievePage(pageNumber);
         var type = Node.GetNodeType(page);
 
         switch (type)
         {
             case NodeType.Leaf:
-                var leaf = table.Tree.GetLeafNode(page);
+                var leaf = tree.GetLeafNode(page);
                 var cell = leaf.FindCell(key);
-                return new Cursor(table, pageNumber, (uint)cell);
+                return new Cursor(tree, pageNumber, (uint)cell);
             case NodeType.Internal:
-                var node = table.Tree.GetInternalNode(page);
+                var node = tree.GetInternalNode(page);
                 var childNumber = node.FindChildNumber(key);
                 var childPageNumber = node.GetChild(childNumber);
-                return FindInPage(table, childPageNumber, key);
+                return FindInPage(tree, childPageNumber, key);
             default:
                 throw new InvalidOperationException("Unexpected node type.");
         }

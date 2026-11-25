@@ -22,7 +22,7 @@ class Table
     public InsertOutcome Insert(Row row)
     {
         var key = TableKey.FromId(row.Id);
-        var cursor = Cursor.CreateAtKey(this, key);
+        var cursor = Cursor.CreateAtKey(Tree, key);
         var leaf = cursor.Leaf;
         var value = new byte[Row.ROW_SIZE];
         row.Serialize(value, 0);
@@ -48,7 +48,7 @@ class Table
 
     public void Select()
     {
-        var cursor = Cursor.CreateAtStart(this);
+        var cursor = Cursor.CreateAtStart(Tree);
 
         while (!cursor.EndOfTable)
         {
