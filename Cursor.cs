@@ -16,7 +16,7 @@ class Cursor(Table table, int pageNumber, uint initialCellNumber)
         return FindInPage(table, table.RootPageNumber, key);
     }
 
-    public Row GetValue() => Leaf.GetRow((int)CellNumber);
+    public ReadOnlySpan<byte> GetValue() => Leaf.GetValue((int)CellNumber);
 
     public void Advance()
     {

@@ -1,7 +1,7 @@
 class LeafNode(Page page, TreeLayout layout) : Node(page)
 {
     private int CellStart(int cell) => Constants.LEAF_NODE_HEADER_SIZE + (cell * Layout.LeafCellSize);
-    private int RowStart(int cell) => CellStart(cell) + Layout.LeafValueOffset;
+    private int ValueStart(int cell) => CellStart(cell) + Layout.LeafValueOffset;
     public byte[] MaxKey => GetKey((int)CellCount - 1).ToArray();
 
     public int NextLeaf
@@ -40,15 +40,16 @@ class LeafNode(Page page, TreeLayout layout) : Node(page)
         key.CopyTo(Page.Data.AsSpan(CellStart(cell), Layout.KeySize));
     }
 
-    public Row GetRow(int cell)
-    {
-        return Row.Deserialize(Page.Data, RowStart(cell));
-    }
+    public ReadOnlySpan<byte> GetValue(int cell) =>
+        Page.Data.AsSpan(ValueStart(cell), Layout.ValueSize);
 
-    public void StoreRow(Row row, int cell)
+    public void SetValueForCell(int cell, ReadOnlySpan<byte> value)
     {
+        if (value.Length != Layout.ValueSize)
+            throw new ArgumentException("Value length does not match the layout.", nameof(value));
+
         Page.MarkDirty();
-        row.Serialize(Page.Data, RowStart(cell));
+        value.CopyTo(Page.Data.AsSpan(ValueStart(cell), Layout.ValueSize));
     }
 
     public int FindCell(ReadOnlySpan<byte> key)

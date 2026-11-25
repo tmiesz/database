@@ -4,7 +4,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
     public TreeLayout Layout { get; } = layout;
     public int RootPageNumber { get; } = rootPageNumber;
 
-    public void SplitAndInsert(Cursor cursor, Row row)
+    public void SplitAndInsert(Cursor cursor, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
     {
         var oldLeaf = cursor.Leaf;
         var oldMax = oldLeaf.MaxKey;
@@ -22,7 +22,6 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
 
         LeafNode destination;
         int cellInDestination;
-        var key = TableKey.FromId(row.Id);
         for (int i = Layout.LeafMaxCells; i >= 0; i--)
         {
 
@@ -35,7 +34,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
             if (i == insertCell)
             {
                 destination.SetKeyForCell(cellInDestination, key);
-                destination.StoreRow(row, cellInDestination);
+                destination.SetValueForCell(cellInDestination, value);
             }
             else if (i > insertCell)
             {

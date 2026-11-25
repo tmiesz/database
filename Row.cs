@@ -36,23 +36,21 @@ class Row
         Array.Copy(emailBytes, 0, buffer, start + EMAIL_OFFSET, emailBytes.Length);
     }
 
-    public static Row Deserialize(byte[] buffer, int start)
+    public static Row Deserialize(ReadOnlySpan<byte> bytes)
     {
-        var id = BitConverter.ToUInt32(buffer.AsSpan(start + ID_OFFSET, ID_SIZE));
+        var id = BitConverter.ToUInt32(bytes.Slice(ID_OFFSET, ID_SIZE));
 
-        var nameSlot = buffer.AsSpan(start + USERNAME_OFFSET, USERNAME_SIZE);
+        var nameSlot = bytes.Slice(USERNAME_OFFSET, USERNAME_SIZE);
         var nameZero = nameSlot.IndexOf((byte)0);
         var nameLength = nameZero == -1 ? USERNAME_SIZE : nameZero;
         var userName = Encoding.UTF8.GetString(nameSlot[..nameLength]);
 
-        var emailSlot = buffer.AsSpan(start + EMAIL_OFFSET, EMAIL_SIZE);
+        var emailSlot = bytes.Slice(EMAIL_OFFSET, EMAIL_SIZE);
         var emailZero = emailSlot.IndexOf((byte)0);
         var emailLength = emailZero == -1 ? EMAIL_SIZE : emailZero;
         var email = Encoding.UTF8.GetString(emailSlot[..emailLength]);
 
-        var row = new Row(id, userName, email);
-
-        return row;
+        return new Row(id, userName, email);
     }
 
     public static bool TryCreate(uint id, string userName, string email, out Row row)

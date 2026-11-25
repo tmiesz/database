@@ -24,6 +24,8 @@ class Table
         var key = TableKey.FromId(row.Id);
         var cursor = Cursor.CreateAtKey(this, key);
         var leaf = cursor.Leaf;
+        var value = new byte[Row.ROW_SIZE];
+        row.Serialize(value, 0);
 
         var cellNumber = cursor.CellNumber;
         if (cellNumber < leaf.CellCount && leaf.GetKey((int)cellNumber).SequenceEqual(key))
@@ -31,13 +33,13 @@ class Table
 
         if (leaf.CellCount >= Tree.Layout.LeafMaxCells)
         {
-            Tree.SplitAndInsert(cursor, row);
+            Tree.SplitAndInsert(cursor, key, value);
             return InsertOutcome.Success;
         }
 
         leaf.MakeRoomAt((int)cellNumber);
         leaf.SetKeyForCell((int)cellNumber, key);
-        leaf.StoreRow(row, (int)cellNumber);
+        leaf.SetValueForCell((int)cellNumber, value);
 
         leaf.CellCount++;
 
@@ -47,9 +49,10 @@ class Table
     public void Select()
     {
         var cursor = Cursor.CreateAtStart(this);
+
         while (!cursor.EndOfTable)
         {
-            var row = cursor.GetValue();
+            var row = Row.Deserialize(cursor.GetValue());
             row.PrintRow();
             cursor.Advance();
         }
