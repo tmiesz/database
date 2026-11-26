@@ -4,10 +4,7 @@
     Environment.Exit(1);
 }
 
-var pager = new Pager(args[0]);
-var layout = new TreeLayout(TableKey.SIZE, Row.ROW_SIZE, Constants.INTERNAL_NODE_MAX_CELLS);
-var tree = new Btree(pager, layout, 0);
-var table = new Table(tree);
+var database = Database.Open(args[0]);
 
 while (true)
 {
@@ -19,7 +16,7 @@ void HandleInput(string input)
 {
     if (input.StartsWith('.'))
     {
-        HandleMetaInput(input, table);
+        HandleMetaInput(input, database);
         return;
     }
 
@@ -44,16 +41,16 @@ void HandleInput(string input)
 
     }
 
-    Execute(statement, table, pager);
+    Execute(statement, database);
 }
 
-static void Execute(Statement statement, Table table, Pager pager)
+static void Execute(Statement statement, Database database)
 {
     switch (statement.Kind)
     {
         case Kind.INSERT:
             {
-                var result = table.Insert(statement.Row!);
+                var result = database.Table.Insert(statement.Row!);
 
                 if (result == InsertOutcome.Duplicate)
                     Console.WriteLine("Error: Duplicate key.");
@@ -63,13 +60,13 @@ static void Execute(Statement statement, Table table, Pager pager)
             }
         case Kind.SELECT:
             {
-                table.Select();
+                database.Table.Select();
                 Console.WriteLine("Executed.");
                 break;
             }
         case Kind.BEGIN:
             {
-                var result = pager.Begin();
+                var result = database.Pager.Begin();
                 if (result == TransactionOutcome.AlreadyOpen)
                     Console.WriteLine("Error: Transaction already open.");
                 else Console.WriteLine("Executed.");
@@ -77,7 +74,7 @@ static void Execute(Statement statement, Table table, Pager pager)
             }
         case Kind.COMMIT:
             {
-                var result = pager.Commit();
+                var result = database.Pager.Commit();
                 if (result == TransactionOutcome.NotOpen)
                     Console.WriteLine("Error: No transaction open.");
                 else Console.WriteLine("Executed.");
@@ -85,7 +82,7 @@ static void Execute(Statement statement, Table table, Pager pager)
             }
         case Kind.ROLLBACK:
             {
-                var result = pager.Rollback();
+                var result = database.Pager.Rollback();
                 if (result == TransactionOutcome.NotOpen)
                     Console.WriteLine("Error: No transaction open.");
                 else Console.WriteLine("Executed.");
@@ -96,7 +93,7 @@ static void Execute(Statement statement, Table table, Pager pager)
             break;
     }
 
-    pager.CompleteStatement();
+    database.Pager.CompleteStatement();
 }
 
 static Outcome PrepareInput(string input, out Statement statement)
@@ -163,25 +160,25 @@ static Outcome PrepareInput(string input, out Statement statement)
     return Outcome.UnrecognizedKeyword;
 }
 
-static void HandleMetaInput(string input, Table table)
+static void HandleMetaInput(string input, Database database)
 {
     var command = input[1..];
 
     switch (command)
     {
         case "exit":
-            table.Close();
+            database.Close();
             Environment.Exit(0);
             break;
         case "constants":
-            Constants.Print(table.Tree.Layout);
+            Constants.Print(database.Table.Tree.Layout);
             break;
         case "btree":
             Console.WriteLine("Tree:");
-            table.Tree.PrintTree(table.RootPageNumber, 0);
+            database.Table.Tree.PrintTree(database.Table.RootPageNumber, 0);
             break;
         case "dirty":
-            var dirtyPages = table.Tree.Pager.GetDirtyPages();
+            var dirtyPages = database.Pager.GetDirtyPages();
             Console.WriteLine(dirtyPages.Count > 0
                     ? "Dirty pages: " + string.Join(", ", dirtyPages)
                     : "Dirty pages: none");
