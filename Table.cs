@@ -1,18 +1,7 @@
-class Table
+class Table(Btree tree)
 {
-    public Btree Tree { get; }
+    public Btree Tree { get; } = tree;
     public int RootPageNumber => Tree.RootPageNumber;
-
-    public Table(Btree tree)
-    {
-        Tree = tree;
-
-        if (Tree.Pager.PageCount == 0)
-        {
-            Tree.InitializeEmpty();
-            Tree.Pager.CompleteStatement();
-        }
-    }
 
     public InsertOutcome Insert(Row row)
     {
@@ -51,11 +40,6 @@ class Table
             row.PrintRow();
             cursor.Advance();
         }
-    }
-
-    public void Close()
-    {
-        Tree.Pager.Close();
     }
 }
 
