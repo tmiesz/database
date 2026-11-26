@@ -9,12 +9,7 @@ class Table
 
         if (Tree.Pager.PageCount == 0)
         {
-            var page = Tree.Pager.RetrievePage(RootPageNumber);
-            var root = Tree.GetLeafNode(page);
-            root.Initialize();
-
-            root.IsRoot = true;
-
+            Tree.InitializeEmpty();
             Tree.Pager.CompleteStatement();
         }
     }

@@ -258,6 +258,13 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         }
     }
 
+    public void InitializeEmpty()
+    {
+        var node = GetLeafNode(RootPageNumber);
+        node.Initialize();
+        node.IsRoot = true;
+    }
+
     public LeafNode GetLeafNode(Page page) =>
         new(page, Layout);
 
