@@ -4,62 +4,28 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
     public TreeLayout Layout { get; } = layout;
     public int RootPageNumber { get; } = rootPageNumber;
 
-    public void SplitAndInsert(Cursor cursor, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
+    public InsertOutcome Insert(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
     {
-        var oldLeaf = cursor.Leaf;
-        var oldMax = oldLeaf.MaxKey;
-        var newPageNumber = Pager.GetUnusedPageNumber();
+        var cursor = Cursor.CreateAtKey(this, key);
+        var leaf = cursor.Leaf;
 
-        var page = Pager.RetrievePage(newPageNumber);
-        var newLeaf = GetLeafNode(page);
+        var cellNumber = cursor.CellNumber;
+        if (cellNumber < leaf.CellCount && leaf.GetKey((int)cellNumber).SequenceEqual(key))
+            return InsertOutcome.Duplicate;
 
-        newLeaf.Initialize();
-        newLeaf.NextLeaf = oldLeaf.NextLeaf;
-        oldLeaf.NextLeaf = newPageNumber;
-        newLeaf.Parent = oldLeaf.Parent;
-
-        int insertCell = (int)cursor.CellNumber;
-
-        LeafNode destination;
-        int cellInDestination;
-        for (int i = Layout.LeafMaxCells; i >= 0; i--)
+        if (leaf.CellCount >= Layout.LeafMaxCells)
         {
-
-            if (i >= Layout.LeafLeftSplitCount)
-                destination = newLeaf;
-            else destination = oldLeaf;
-
-            cellInDestination = i % Layout.LeafLeftSplitCount;
-
-            if (i == insertCell)
-            {
-                destination.SetKeyForCell(cellInDestination, key);
-                destination.SetValueForCell(cellInDestination, value);
-            }
-            else if (i > insertCell)
-            {
-                oldLeaf.CopyCellTo(i - 1, destination, cellInDestination);
-            }
-            else
-            {
-                oldLeaf.CopyCellTo(i, destination, cellInDestination);
-            }
+            SplitAndInsert(cursor, key, value);
+            return InsertOutcome.Success;
         }
 
-        oldLeaf.CellCount = (uint)Layout.LeafLeftSplitCount;
-        newLeaf.CellCount = (uint)Layout.LeafRightSplitCount;
+        leaf.MakeRoomAt((int)cellNumber);
+        leaf.SetKeyForCell((int)cellNumber, key);
+        leaf.SetValueForCell((int)cellNumber, value);
 
-        if (oldLeaf.IsRoot)
-            CreateNewRoot(newPageNumber);
-        else
-        {
-            var parentPageNumber = oldLeaf.Parent;
-            var newMax = oldLeaf.MaxKey;
-            var parent = GetInternalNode(parentPageNumber);
+        leaf.CellCount++;
 
-            parent.UpdateKey(oldMax, newMax);
-            InternalNodeInsert(parentPageNumber, newPageNumber);
-        }
+        return InsertOutcome.Success;
     }
 
     public void CreateNewRoot(int rightChildPageNumber)
@@ -276,6 +242,64 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
 
     public InternalNode GetInternalNode(int pageNumber) =>
         GetInternalNode(Pager.RetrievePage(pageNumber));
+
+    private void SplitAndInsert(Cursor cursor, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
+    {
+        var oldLeaf = cursor.Leaf;
+        var oldMax = oldLeaf.MaxKey;
+        var newPageNumber = Pager.GetUnusedPageNumber();
+
+        var page = Pager.RetrievePage(newPageNumber);
+        var newLeaf = GetLeafNode(page);
+
+        newLeaf.Initialize();
+        newLeaf.NextLeaf = oldLeaf.NextLeaf;
+        oldLeaf.NextLeaf = newPageNumber;
+        newLeaf.Parent = oldLeaf.Parent;
+
+        int insertCell = (int)cursor.CellNumber;
+
+        LeafNode destination;
+        int cellInDestination;
+        for (int i = Layout.LeafMaxCells; i >= 0; i--)
+        {
+
+            if (i >= Layout.LeafLeftSplitCount)
+                destination = newLeaf;
+            else destination = oldLeaf;
+
+            cellInDestination = i % Layout.LeafLeftSplitCount;
+
+            if (i == insertCell)
+            {
+                destination.SetKeyForCell(cellInDestination, key);
+                destination.SetValueForCell(cellInDestination, value);
+            }
+            else if (i > insertCell)
+            {
+                oldLeaf.CopyCellTo(i - 1, destination, cellInDestination);
+            }
+            else
+            {
+                oldLeaf.CopyCellTo(i, destination, cellInDestination);
+            }
+        }
+
+        oldLeaf.CellCount = (uint)Layout.LeafLeftSplitCount;
+        newLeaf.CellCount = (uint)Layout.LeafRightSplitCount;
+
+        if (oldLeaf.IsRoot)
+            CreateNewRoot(newPageNumber);
+        else
+        {
+            var parentPageNumber = oldLeaf.Parent;
+            var newMax = oldLeaf.MaxKey;
+            var parent = GetInternalNode(parentPageNumber);
+
+            parent.UpdateKey(oldMax, newMax);
+            InternalNodeInsert(parentPageNumber, newPageNumber);
+        }
+    }
 
     private static void Indent(int level)
     {

@@ -6,28 +6,10 @@ class Table(Btree tree)
     public InsertOutcome Insert(Row row)
     {
         var key = TableKey.FromId(row.Id);
-        var cursor = Cursor.CreateAtKey(Tree, key);
-        var leaf = cursor.Leaf;
         var value = new byte[Row.ROW_SIZE];
         row.Serialize(value, 0);
 
-        var cellNumber = cursor.CellNumber;
-        if (cellNumber < leaf.CellCount && leaf.GetKey((int)cellNumber).SequenceEqual(key))
-            return InsertOutcome.Duplicate;
-
-        if (leaf.CellCount >= Tree.Layout.LeafMaxCells)
-        {
-            Tree.SplitAndInsert(cursor, key, value);
-            return InsertOutcome.Success;
-        }
-
-        leaf.MakeRoomAt((int)cellNumber);
-        leaf.SetKeyForCell((int)cellNumber, key);
-        leaf.SetValueForCell((int)cellNumber, value);
-
-        leaf.CellCount++;
-
-        return InsertOutcome.Success;
+        return Tree.Insert(key, value);
     }
 
     public void Select()
