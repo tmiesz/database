@@ -3,7 +3,7 @@ using System.Text;
 class Row
 {
     const int ID_SIZE = 4;
-    const int USERNAME_SIZE = 32;
+    public const int USERNAME_SIZE = 32;
     const int EMAIL_SIZE = 255;
 
     const int ID_OFFSET = 0;
