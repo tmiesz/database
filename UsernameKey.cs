@@ -7,14 +7,12 @@ static class UsernameKey
 
     public static byte[] Create(string username, uint id)
     {
-        var bytes = new byte[SIZE];
-        var usernameSpan = bytes.AsSpan(0, Row.USERNAME_SIZE);
-
-        var bytesWritten = Encoding.UTF8.GetBytes(username, usernameSpan);
-
-        if (bytesWritten > Row.USERNAME_SIZE)
+        if (Encoding.UTF8.GetByteCount(username) > Row.USERNAME_SIZE)
             throw new ArgumentException("Username is too long.", nameof(username));
 
+        var bytes = new byte[SIZE];
+
+        Encoding.UTF8.GetBytes(username, bytes.AsSpan(0, Row.USERNAME_SIZE));
         BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(Row.USERNAME_SIZE), id);
 
         return bytes;
