@@ -50,7 +50,7 @@ static void Execute(Statement statement, Database database)
     {
         case Kind.INSERT:
             {
-                var result = database.Table.Insert(statement.Row!);
+                var result = database.Insert(statement.Row!);
 
                 if (result == InsertOutcome.Duplicate)
                     Console.WriteLine("Error: Duplicate key.");

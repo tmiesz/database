@@ -62,6 +62,22 @@ internal class Database
         return new Database(pager, new Table(tableTree), indexTree);
     }
 
+    public InsertOutcome Insert(Row row)
+    {
+        var outcome = Table.Insert(row);
+
+        if (outcome is InsertOutcome.Duplicate)
+            return outcome;
+
+        var key = UsernameKey.Create(row.UserName, row.Id);
+        var indexOutcome = UsernameIndex.Insert(key, []);
+
+        if (indexOutcome is InsertOutcome.Duplicate)
+            throw new InvalidOperationException("Table and username index disagree.");
+
+        return InsertOutcome.Success;
+    }
+
     public void Close()
     {
         Pager.Close();
