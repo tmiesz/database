@@ -387,7 +387,7 @@ public class DatabaseTests
             "commit");
 
         Assert.True(File.Exists(journal));
-        Assert.Equal(4 * 4096L, new FileInfo(db).Length);
+        Assert.Equal(5 * 4096L, new FileInfo(db).Length);
 
         var (lines, exitCode, error) = await RunScript(db, "select", ".exit");
 
@@ -400,6 +400,6 @@ public class DatabaseTests
 
         Assert.Equal(expected, lines[..^1]);
         Assert.False(File.Exists(journal));
-        Assert.Equal(2 * 4096L, new FileInfo(db).Length);
+        Assert.Equal(3 * 4096L, new FileInfo(db).Length);
     }
 }
