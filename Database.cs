@@ -48,7 +48,8 @@ internal class Database
             indexRoot = header.GetRoot(Constants.USERNAME_INDEX_TREE);
 
             if (tableRoot <= Constants.DB_HEADER_PAGE_NUMBER || tableRoot >= pager.PageCount ||
-                indexRoot <= Constants.DB_HEADER_PAGE_NUMBER || indexRoot >= pager.PageCount)
+                indexRoot <= Constants.DB_HEADER_PAGE_NUMBER || indexRoot >= pager.PageCount ||
+                indexRoot == tableRoot)
             {
                 Console.WriteLine("Damaged database header.");
                 Environment.Exit(1);
@@ -56,7 +57,7 @@ internal class Database
         }
 
         var tableTree = new Btree(pager, tableLayout, tableRoot);
-        var indexTree = new Btree(pager, indexLayout, tableRoot);
+        var indexTree = new Btree(pager, indexLayout, indexRoot);
 
         return new Database(pager, new Table(tableTree), indexTree);
     }
