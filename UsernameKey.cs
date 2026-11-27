@@ -31,4 +31,6 @@ static class UsernameKey
 
     public static uint ToId(ReadOnlySpan<byte> key)
         => BinaryPrimitives.ReadUInt32BigEndian(key.Slice(Row.USERNAME_SIZE, TableKey.SIZE));
+
+    public static string Format(ReadOnlySpan<byte> key) => $"{GetUsername(key)} ({ToId(key)})";
 }

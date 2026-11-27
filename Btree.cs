@@ -184,7 +184,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         return GetNodeMaxKey(Pager.RetrievePage(rightChildPageNumber));
     }
 
-    public void PrintTree(int pageNumber, int indentationLevel)
+    public void PrintTree(int pageNumber, int indentationLevel, KeyFormatter format)
     {
         var page = Pager.RetrievePage(pageNumber);
 
@@ -200,11 +200,11 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
                 {
                     for (int i = 0; i < node.NumKeys; i++)
                     {
-                        PrintTree(node.GetChild(i), indentationLevel + 1);
+                        PrintTree(node.GetChild(i), indentationLevel + 1, format);
                         Indent(indentationLevel + 1);
-                        Console.WriteLine($"- key {TableKey.ToId(node.GetKey(i))}");
+                        Console.WriteLine($"- key {format(node.GetKey(i))}");
                     }
-                    PrintTree(node.RightChild, indentationLevel + 1);
+                    PrintTree(node.RightChild, indentationLevel + 1, format);
                 }
                 break;
             case NodeType.Leaf:
@@ -214,7 +214,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
                 for (int i = 0; i < leaf.CellCount; i++)
                 {
                     Indent(indentationLevel + 1);
-                    Console.WriteLine($"- {TableKey.ToId(leaf.GetKey(i))}");
+                    Console.WriteLine($"- {format(leaf.GetKey(i))}");
                 }
                 break;
             default:
@@ -307,3 +307,5 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
             Console.Write("  ");
     }
 }
+
+delegate string KeyFormatter(ReadOnlySpan<byte> key);

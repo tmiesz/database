@@ -12,4 +12,5 @@ static class TableKey
     }
 
     public static uint ToId(ReadOnlySpan<byte> key) => BinaryPrimitives.ReadUInt32BigEndian(key);
+    public static string Format(ReadOnlySpan<byte> key) => ToId(key).ToString();
 }
