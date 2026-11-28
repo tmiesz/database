@@ -1,6 +1,6 @@
 using System.Text;
 
-class Row
+internal class Row
 {
     const int ID_SIZE = 4;
     public const int USERNAME_SIZE = 32;

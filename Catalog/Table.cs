@@ -1,4 +1,4 @@
-class Table(Btree tree)
+internal class Table(Btree tree)
 {
     public Btree Tree { get; } = tree;
     public int RootPageNumber => Tree.RootPageNumber;

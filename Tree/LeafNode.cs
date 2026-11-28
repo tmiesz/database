@@ -1,4 +1,4 @@
-class LeafNode(Page page, TreeLayout layout) : Node(page)
+internal class LeafNode(Page page, TreeLayout layout) : Node(page)
 {
     private int CellStart(int cell) => Constants.LEAF_NODE_HEADER_SIZE + (cell * Layout.LeafCellSize);
     private int ValueStart(int cell) => CellStart(cell) + Layout.LeafValueOffset;

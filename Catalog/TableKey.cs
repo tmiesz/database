@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-static class TableKey
+static internal class TableKey
 {
     public const int SIZE = sizeof(uint);
 

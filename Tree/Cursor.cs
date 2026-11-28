@@ -1,4 +1,4 @@
-class Cursor(Btree tree, int pageNumber, uint initialCellNumber)
+internal class Cursor(Btree tree, int pageNumber, uint initialCellNumber)
 {
     public Btree Tree { get; } = tree;
     public LeafNode Leaf { get; private set; } = tree.GetLeafNode(pageNumber);

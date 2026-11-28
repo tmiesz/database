@@ -1,8 +1,8 @@
 internal class Pager
 {
-    public string FileName { get; }
+    private string FileName { get; }
     private string JournalFileName => $"{FileName}.journal";
-    public FileStream FileStream { get; }
+    private FileStream FileStream { get; }
     private Page?[] Pages { get; } = new Page?[Constants.MAX_PAGES];
     public int PageCount { get; private set; }
     public bool IsTransactionOpen { get; private set; }

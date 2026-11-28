@@ -1,4 +1,4 @@
-class InternalNode(Page page, TreeLayout layout) : Node(page)
+internal class InternalNode(Page page, TreeLayout layout) : Node(page)
 {
     private int CellStart(int cell) => Constants.INTERNAL_NODE_HEADER_SIZE + (cell * Layout.InternalCellSize);
 

@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 
-static class UsernameKey
+static internal class UsernameKey
 {
     public const int SIZE = Row.USERNAME_SIZE + TableKey.SIZE;
 

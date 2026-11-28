@@ -28,7 +28,66 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         return InsertOutcome.Success;
     }
 
-    public void CreateNewRoot(int rightChildPageNumber)
+    public void PrintTree(int pageNumber, int indentationLevel, KeyFormatter format)
+    {
+        var page = Pager.RetrievePage(pageNumber);
+
+        var nodeType = Node.GetNodeType(page);
+
+        switch (nodeType)
+        {
+            case NodeType.Internal:
+                var node = GetInternalNode(page);
+                Indent(indentationLevel);
+                Console.WriteLine($"- internal (size {node.NumKeys})");
+                if (node.NumKeys > 0)
+                {
+                    for (int i = 0; i < node.NumKeys; i++)
+                    {
+                        PrintTree(node.GetChild(i), indentationLevel + 1, format);
+                        Indent(indentationLevel + 1);
+                        Console.WriteLine($"- key {format(node.GetKey(i))}");
+                    }
+                    PrintTree(node.RightChild, indentationLevel + 1, format);
+                }
+                break;
+            case NodeType.Leaf:
+                var leaf = GetLeafNode(page);
+                Indent(indentationLevel);
+                Console.WriteLine($"- leaf (size {leaf.CellCount})");
+                for (int i = 0; i < leaf.CellCount; i++)
+                {
+                    Indent(indentationLevel + 1);
+                    Console.WriteLine($"- {format(leaf.GetKey(i))}");
+                }
+                break;
+            default:
+                Console.WriteLine("Unexpected node type.");
+                Environment.Exit(1);
+                break;
+        }
+    }
+
+    public void InitializeEmpty()
+    {
+        var node = GetLeafNode(RootPageNumber);
+        node.Initialize();
+        node.IsRoot = true;
+    }
+
+    public LeafNode GetLeafNode(Page page) =>
+        new(page, Layout);
+
+    public LeafNode GetLeafNode(int pageNumber) =>
+        GetLeafNode(Pager.RetrievePage(pageNumber));
+
+    public InternalNode GetInternalNode(Page page) =>
+        new(page, Layout);
+
+    public InternalNode GetInternalNode(int pageNumber) =>
+        GetInternalNode(Pager.RetrievePage(pageNumber));
+
+    private void CreateNewRoot(int rightChildPageNumber)
     {
         var rootPage = Pager.RetrievePage(RootPageNumber);
 
@@ -70,7 +129,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         root.RightChild = rightChildPageNumber;
     }
 
-    public void InternalNodeInsert(int parentPageNumber, int childPageNumber)
+    private void InternalNodeInsert(int parentPageNumber, int childPageNumber)
     {
         var parent = GetInternalNode(Pager.RetrievePage(parentPageNumber));
         var child = Pager.RetrievePage(childPageNumber);
@@ -112,7 +171,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         }
     }
 
-    public void InternalNodeSplitAndInsert(int parentPageNumber, int childPageNumber)
+    private void InternalNodeSplitAndInsert(int parentPageNumber, int childPageNumber)
     {
         var oldPageNumber = parentPageNumber;
         var oldPage = Pager.RetrievePage(oldPageNumber);
@@ -174,7 +233,7 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         }
     }
 
-    public byte[] GetNodeMaxKey(Page page)
+    private byte[] GetNodeMaxKey(Page page)
     {
         var nodeType = Node.GetNodeType(page);
         if (nodeType is NodeType.Leaf)
@@ -184,64 +243,6 @@ internal class Btree(Pager pager, TreeLayout layout, int rootPageNumber)
         return GetNodeMaxKey(Pager.RetrievePage(rightChildPageNumber));
     }
 
-    public void PrintTree(int pageNumber, int indentationLevel, KeyFormatter format)
-    {
-        var page = Pager.RetrievePage(pageNumber);
-
-        var nodeType = Node.GetNodeType(page);
-
-        switch (nodeType)
-        {
-            case NodeType.Internal:
-                var node = GetInternalNode(page);
-                Indent(indentationLevel);
-                Console.WriteLine($"- internal (size {node.NumKeys})");
-                if (node.NumKeys > 0)
-                {
-                    for (int i = 0; i < node.NumKeys; i++)
-                    {
-                        PrintTree(node.GetChild(i), indentationLevel + 1, format);
-                        Indent(indentationLevel + 1);
-                        Console.WriteLine($"- key {format(node.GetKey(i))}");
-                    }
-                    PrintTree(node.RightChild, indentationLevel + 1, format);
-                }
-                break;
-            case NodeType.Leaf:
-                var leaf = GetLeafNode(page);
-                Indent(indentationLevel);
-                Console.WriteLine($"- leaf (size {leaf.CellCount})");
-                for (int i = 0; i < leaf.CellCount; i++)
-                {
-                    Indent(indentationLevel + 1);
-                    Console.WriteLine($"- {format(leaf.GetKey(i))}");
-                }
-                break;
-            default:
-                Console.WriteLine("Unexpected node type.");
-                Environment.Exit(1);
-                break;
-        }
-    }
-
-    public void InitializeEmpty()
-    {
-        var node = GetLeafNode(RootPageNumber);
-        node.Initialize();
-        node.IsRoot = true;
-    }
-
-    public LeafNode GetLeafNode(Page page) =>
-        new(page, Layout);
-
-    public LeafNode GetLeafNode(int pageNumber) =>
-        GetLeafNode(Pager.RetrievePage(pageNumber));
-
-    public InternalNode GetInternalNode(Page page) =>
-        new(page, Layout);
-
-    public InternalNode GetInternalNode(int pageNumber) =>
-        GetInternalNode(Pager.RetrievePage(pageNumber));
 
     private void SplitAndInsert(Cursor cursor, ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
     {
