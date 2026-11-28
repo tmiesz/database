@@ -402,4 +402,94 @@ public class DatabaseTests
         Assert.False(File.Exists(journal));
         Assert.Equal(3 * 4096L, new FileInfo(db).Length);
     }
+    [Fact]
+    public async Task IndexIsSortedByUsername()
+    {
+        var db = GenerateDatabasePath();
+        var (lines, exitCode, error) = await RunScript(
+            db,
+            "insert 3 zed zed@example.com",
+            "insert 1 alice alice@example.com",
+            "insert 2 bob bob2@example.com",
+            "insert 5 bob bob5@example.com",
+            ".index",
+            ".exit");
+
+        Assert.True(exitCode == 0, error);
+
+        string[] expected =
+        [
+            "db > Index:",
+            "- leaf (size 4)",
+            "  - alice (1)",
+            "  - bob (2)",
+            "  - bob (5)",
+            "  - zed (3)",
+            "db > ",
+    ];
+
+        Assert.Equal(expected, lines[^7..]);
+    }
+
+    [Fact]
+    public async Task RollbackDropsIndexEntry()
+    {
+        var db = GenerateDatabasePath();
+        var (lines, exitCode, error) = await RunScript(
+            db,
+            "insert 1 alice alice@example.com",
+            "begin",
+            "insert 2 bob bob@example.com",
+            "rollback",
+            ".index",
+            "select",
+            ".exit");
+
+        Assert.True(exitCode == 0, error);
+
+        string[] expected =
+        [
+            "db > Index:",
+            "- leaf (size 1)",
+            "  - alice (1)",
+            "db > (1, alice, alice@example.com)",
+            "Executed.",
+            "db > ",
+    ];
+
+        Assert.Equal(expected, lines[^6..]);
+    }
+
+    [Fact]
+    public async Task CommitCutShortIsRepairedForBothTrees()
+    {
+        var db = GenerateDatabasePath();
+        var journal = db + ".journal";
+
+        var (_, setupExit, setupError) = await RunScript(
+            db,
+            ["begin",
+            .. Enumerable.Range(1, 113).Select(i => $"insert {i} user{i} person{i}@example.com"),
+            "commit",
+            ".exit"]);
+
+        Assert.True(setupExit == 0, setupError);
+
+        var (_, crashExit, crashError) = await RunScriptWithCrash(
+            db,
+            "after-database-written",
+            "begin",
+            "insert 114 user114 person114@example.com",
+            "commit");
+
+        Assert.True(File.Exists(journal));
+
+        var (lines, exitCode, error) = await RunScript(db, ".index", "select", ".exit");
+
+        Assert.True(exitCode == 0, error);
+        Assert.Contains("- leaf (size 113)", lines);
+        Assert.DoesNotContain(lines, l => l.Contains("- internal"));
+        Assert.Equal(113, lines.Count(l => l.Contains("@example.com")));
+        Assert.False(File.Exists(journal));
+    }
 }
