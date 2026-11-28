@@ -175,11 +175,11 @@ static void HandleMetaInput(string input, Database database)
             break;
         case "btree":
             Console.WriteLine("Tree:");
-            database.Table.Tree.PrintTree(database.Table.RootPageNumber, 0, TableKey.Format); ;
+            database.Table.Tree.PrintTree(database.Table.RootPageNumber, 0, TableKey.Format);
             break;
         case "index":
             Console.WriteLine("Index:");
-            database.UsernameIndex.PrintTree(database.UsernameIndex.RootPageNumber, 0, UsernameKey.Format); ;
+            database.UsernameIndex.PrintTree(database.UsernameIndex.RootPageNumber, 0, UsernameKey.Format);
             break;
         case "dirty":
             var dirtyPages = database.Pager.GetDirtyPages();
